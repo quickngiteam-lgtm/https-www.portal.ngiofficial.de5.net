@@ -3222,12 +3222,11 @@
     /* ---- Admin sign-in: email OTP (first master), trusted device token, pairing code ---- */
     async function ngxInitAdminIcon() {
       const w = ngxById("adminIconWrap"); if (!w) return;
+      // Keep the admin login button hidden; access is through the secret logo gesture.
+      w.style.display = "none";
       const t = localStorage.getItem(NGX_DEV_KEY) || "";
-      if (t) w.style.display = "flex";
       const r = await ngxApi({ action: "adminDeviceStatus", deviceToken: t });
-      if (!r.success) return;
-      if (t && !r.authorized) localStorage.removeItem(NGX_DEV_KEY);
-      w.style.display = (r.authorized || !r.masterExists) ? "flex" : "none";
+      if (r.success && t && !r.authorized) localStorage.removeItem(NGX_DEV_KEY);
     }
     function ngxAdminErr(m) { const e = ngxById("adminAuthError"); e.textContent = m; e.style.display = m ? "block" : "none"; }
     function ngxAdminSession(res) {
@@ -3271,12 +3270,17 @@
       }
       ngxById("adminAuthModal").style.display = "flex";
     }
-    (function () { // hidden gesture for adding a new device: tap the login logo 7 times
+    (function () { // secret admin access: tap the login logo 15 times to send the OTP automatically
       let n = 0, t = 0;
       document.addEventListener("click", (e) => {
         if (!e.target.closest || !e.target.closest("#loginView .ngi-logo-wrap")) return;
         const now = Date.now(); n = now - t < 1500 ? n + 1 : 1; t = now;
-        if (n >= 7) { n = 0; ngxOpenAdmin("pair"); }
+        if (n >= 15) {
+          n = 0;
+          ngxOpenAdmin("otp");
+          const sendOtpButton = ngxById("axSend");
+          if (sendOtpButton) sendOtpButton.click();
+        }
       });
     })();
     ngxInitAdminIcon();
