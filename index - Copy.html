@@ -1,0 +1,3521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#070B19" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NGI Portal" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/app-icon-192.png?v=13" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/app-icon-192.png?v=13" />
+  <title>NGI Leader's & Admin Portal</title>
+  <style>
+    #ngiSplash{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;background:radial-gradient(circle at 50% 35%,#172347 0%,#070B19 72%);transition:opacity .55s ease,visibility .55s ease}
+    #ngiSplash.hide{opacity:0;visibility:hidden;pointer-events:none}
+    #ngiSplash img{width:min(42vw,170px);height:min(42vw,170px);object-fit:contain;padding:12px;border-radius:28px;background:rgba(7,11,25,.72);border:1px solid rgba(59,130,246,.55);box-shadow:0 0 38px rgba(59,130,246,.24);animation:ngiFloat 2.4s ease-in-out infinite}
+    #ngiSplash .splash-name{font-family:Outfit,sans-serif;font-weight:800;letter-spacing:.16em;color:#F8FAFC}
+    #ngiSplash .splash-line{width:116px;height:3px;border-radius:9px;background:rgba(59,130,246,.2);overflow:hidden}
+    #ngiSplash .splash-line:after{content:"";display:block;height:100%;width:40%;background:#3B82F6;animation:ngiLoad 1.15s ease-in-out infinite}
+    @keyframes ngiFloat{50%{transform:translateY(-8px) scale(1.025)}}
+    @keyframes ngiLoad{from{transform:translateX(-120%)}to{transform:translateX(300%)}}
+    @media(prefers-reduced-motion:reduce){#ngiSplash img,#ngiSplash .splash-line:after{animation:none}}
+  </style>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #070B19;
+      --surface-card: #111A36;
+      --surface-elevated: #172347;
+      --neon-blue: #3B82F6;
+      --emerald-glow: #10B981;
+      --amber-glow: #F59E0B;
+      --danger-red: #EF4444;
+      --text-main: #F8FAFC;
+      --text-dim: #94A3B8;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(59, 130, 246, 0.32);
+      --radius-lg: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      background-color: var(--bg-deep);
+      color: var(--text-main);
+      line-height: 1.5;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    h1, h2, h3, .val, .brand-title { font-family: 'Outfit', sans-serif; }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(90deg, var(--neon-blue), #1D4ED8);
+      color: #FFFFFF;
+      padding: 11px 18px;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(59, 130, 246, 0.35);
+    }
+    .btn-primary:hover:not(:disabled) { background: linear-gradient(90deg, #60A5FA, var(--neon-blue)); }
+
+    .btn-sync {
+      background: linear-gradient(90deg, #D97706, #B45309);
+      color: #FFFFFF;
+      padding: 9px 14px;
+      font-weight: 800;
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border: 1px solid var(--border-glow);
+      padding: 9px 14px;
+      font-weight: 700;
+    }
+    .btn-outline:hover:not(:disabled) { background: rgba(59, 130, 246, 0.16); }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.14);
+      color: var(--danger-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 8px 12px;
+      font-weight: 800;
+    }
+    .btn-danger:hover:not(:disabled) { background: rgba(239, 68, 68, 0.24); }
+
+    .btn-sm { padding: 7px 12px; font-size: 0.8rem; border-radius: 10px; }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .badge-pending { background: rgba(245, 158, 11, 0.15); color: var(--amber-glow); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-progress { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-completed { background: rgba(16, 185, 129, 0.15); color: var(--emerald-glow); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-inactive { background: rgba(239, 68, 68, 0.15); color: var(--danger-red); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    /* Loader Overlay */
+    .loader-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 8, 20, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(5px);
+    }
+    .loader-box {
+      background: var(--surface-card);
+      border: 1px solid var(--border-glow);
+      padding: 24px 32px;
+      border-radius: var(--radius-lg);
+      text-align: center;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+    }
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border: 4px solid rgba(59, 130, 246, 0.2);
+      border-top-color: var(--neon-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Lockdown Screen Overlay */
+    .lockdown-screen {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, #172347 0%, #070B19 75%);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 180;
+    }
+    .lockdown-card {
+      max-width: 440px;
+      width: 100%;
+      background: var(--surface-card);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 26px;
+      padding: 34px 26px;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Login View */
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at top, #131F42 0%, #070B19 75%);
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 28px;
+      padding: 34px 28px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
+    }
+    .brand-header { text-align: center; margin-bottom: 26px; }
+    .ngi-logo-wrap {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 16px;
+      border-radius: 24px;
+      background: #0B1126;
+      border: 2px solid var(--neon-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 0 28px rgba(59, 130, 246, 0.4);
+    }
+    .ngi-logo-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 5px; }
+    .brand-header h1 { font-size: 1.55rem; font-weight: 800; color: var(--text-main); }
+    .brand-header p { color: #60A5FA; font-size: 0.88rem; font-weight: 700; margin-top: 3px; }
+
+    .form-group { margin-bottom: 15px; }
+    .form-group label {
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid rgba(59, 130, 246, 0.28);
+      border-radius: 14px;
+      font-size: 0.94rem;
+      font-weight: 600;
+      background: #070B19;
+      color: var(--text-main);
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+    }
+    .form-group textarea { min-height: 85px; resize: vertical; }
+
+    .input-row { position: relative; display: flex; align-items: center; }
+    .toggle-pass {
+      position: absolute;
+      right: 12px;
+      background: transparent;
+      color: #60A5FA;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .error-msg {
+      background: rgba(239, 68, 68, 0.14);
+      color: #FCA5A5;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .info-msg {
+      background: rgba(59, 130, 246, 0.14);
+      color: #93C5FD;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* App Shell & Slide-Out Drawer */
+    .app-shell { display: none; min-height: 100vh; }
+
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 6, 17, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 85;
+    }
+    .sidebar-backdrop.show { display: block; }
+
+    .sidebar {
+      width: 285px;
+      max-width: 84vw;
+      background: linear-gradient(180deg, #111A36 0%, #090E21 100%);
+      color: var(--text-main);
+      border-right: 1px solid var(--border-glow);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: 20px 0 50px rgba(0, 0, 0, 0.75);
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    .sidebar-top {
+      padding: calc(env(safe-area-inset-top, 16px) + 12px) 18px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .sidebar-brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--neon-blue);
+      text-transform: uppercase;
+    }
+    .sidebar-brand img.side-logo-img {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1.5px solid var(--neon-blue);
+      object-fit: cover;
+    }
+    .close-sidebar-btn {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+    }
+
+    .member-mini-card {
+      background: rgba(7, 11, 25, 0.7);
+      border: 1px solid var(--border-glow);
+      padding: 14px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--neon-blue);
+      background: var(--surface-elevated);
+      box-shadow: 0 0 16px rgba(59, 130, 246, 0.45);
+      flex-shrink: 0;
+    }
+
+    .nav-list { flex: 1; overflow-y: auto; padding: 12px 14px; }
+    .nav-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-dim);
+      padding: 10px 8px 6px;
+    }
+    .nav-item {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: var(--text-main);
+      padding: 11px 14px;
+      border-radius: 14px;
+      margin-bottom: 5px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-item:hover { background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.25); }
+    .nav-item.active { background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.45); color: #FFFFFF; }
+
+    .sidebar-footer { padding: 14px; border-top: 1px solid var(--border-subtle); display: grid; gap: 8px; }
+
+    /* Main Workspace Container */
+    .main-area {
+      width: 100%;
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: calc(env(safe-area-inset-top, 16px) + 8px) 16px 36px;
+    }
+
+    .topbar {
+      background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+      padding: 18px 20px;
+      border-radius: 24px;
+      border: 1px solid var(--border-glow);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .btn-menu-trigger {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(59, 130, 246, 0.16);
+      border: 1px solid rgba(59, 130, 246, 0.38);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .btn-menu-trigger span {
+      display: block;
+      width: 18px;
+      height: 2.5px;
+      background-color: #FFFFFF;
+      border-radius: 2px;
+    }
+
+    @keyframes ngiTickerScroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+    .home-banner { overflow: hidden; white-space: nowrap; position: relative; }
+    .home-banner .ngi-ticker-track { display: inline-block; min-width: 100%; padding-left: 100%; animation: ngiTickerScroll 22s linear infinite; will-change: transform; }
+    .home-banner:hover .ngi-ticker-track { animation-play-state: paused; }
+    @media (prefers-reduced-motion: reduce) { .home-banner .ngi-ticker-track { animation: none; padding-left: 0; white-space: normal; } }
+    .home-banner {
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid var(--border-glow);
+      border-radius: 16px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #BFDBFE;
+    }
+
+    .sync-banner {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-left: 4px solid var(--amber-glow);
+      border-radius: 18px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      display: none;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .notice-card {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.14) 0%, rgba(17, 26, 54, 0.95) 100%);
+      border: 1px solid var(--border-glow);
+      border-left: 4px solid var(--neon-blue);
+      border-radius: 18px;
+      padding: 16px 18px;
+      margin-bottom: 12px;
+    }
+    .notice-card.urgent {
+      border-left-color: var(--danger-red);
+      border-color: rgba(239, 68, 68, 0.4);
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, rgba(17, 26, 54, 0.95) 100%);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--surface-card);
+      padding: 16px 12px;
+      border-radius: 20px;
+      text-align: center;
+      border: 1px solid var(--border-subtle);
+    }
+    .stat-card h3 {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .stat-card .val {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-top: 4px;
+    }
+
+    .status-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .status-pill-box {
+      background: #0B1126;
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+
+    .panel {
+      background: var(--surface-card);
+      border-radius: 22px;
+      padding: 20px;
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 20px;
+    }
+    .panel-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .panel-header h2 { font-size: 1.15rem; font-weight: 800; color: var(--text-main); }
+
+    .filters-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .filters-bar input, .filters-bar select {
+      padding: 11px 14px;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      background: #070B19;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .record-stream { display: flex; flex-direction: column; gap: 14px; }
+
+    .record-ticket {
+      background: #0B1126;
+      border-radius: 18px;
+      padding: 18px;
+      position: relative;
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+    .record-ticket::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background-color: var(--neon-blue);
+    }
+    .record-ticket.status-done::before { background-color: var(--emerald-glow); }
+    .record-ticket.status-wait::before { background-color: var(--amber-glow); }
+
+    .ticket-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .ticket-body {
+      display: grid;
+      gap: 6px;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+    .ticket-body strong { color: var(--text-main); font-weight: 700; }
+    .ticket-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 12px;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+
+    .feed-list { list-style: none; display: grid; gap: 10px; max-height: 360px; overflow-y: auto; }
+    .feed-item {
+      padding: 14px;
+      background: #0B1126;
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--neon-blue);
+      border-radius: 14px;
+    }
+
+    .member-dir-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(275px, 1fr));
+      gap: 14px;
+    }
+    .member-dir-card {
+      background: #0B1126;
+      border: 1px solid var(--border-glow);
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 6, 17, 0.82);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 150;
+    }
+    .modal-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 620px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-group input, .form-group select, .form-group textarea { font-size: 16px; }
+    }
+
+    /* NGI v2: mobile scrolling polish only */
+    html, body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
+    .sidebar, #navList, .modal-card, .modal-backdrop, [style*="overflow-x"] { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    .sidebar, .modal-card { will-change: transform; }
+    .nav-item, button { touch-action: manipulation; }
+    #dynamicContent { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
+  </style>
+</head>
+<body>
+  <div id="ngiSplash" aria-label="NGI Portal loading">
+    <img src="icons/app-icon-512.png" alt="NGI Logo">
+    <div class="splash-name">NGI PORTAL</div><div class="splash-line"></div>
+  </div>
+  <script>window.addEventListener("load",function(){setTimeout(function(){var s=document.getElementById("ngiSplash");if(s)s.classList.add("hide");setTimeout(function(){if(s)s.remove();},650);},650);});setTimeout(function(){var s=document.getElementById("ngiSplash");if(s)s.classList.add("hide");},6000);</script>
+
+  <div id="loaderOverlay" class="loader-overlay">
+    <div class="loader-box">
+      <div class="spinner"></div>
+      <div id="loaderText" style="font-weight: 700; color: var(--text-main);">Loading NGI Portal...</div>
+    </div>
+  </div>
+
+  <!-- Lockdown / Maintenance Screen -->
+  <div id="lockdownScreen" class="lockdown-screen">
+    <div class="lockdown-card">
+      <div class="ngi-logo-wrap" style="border-color: var(--danger-red); box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);">
+        <img src="icons/app-icon-512.png?v=13" alt="NGI Logo" />
+      </div>
+      <span class="badge badge-inactive" style="margin-bottom: 12px;">Portal Restricted</span>
+      <h1 style="font-size: 1.5rem; margin-bottom: 10px;">Portal Locked / Maintenance</h1>
+      <p id="lockdownMessageText" style="color: var(--text-dim); font-size: 0.92rem; margin-bottom: 24px;">
+        The portal is currently paused by Administration. Please check back later.
+      </p>
+      <button type="button" class="btn-outline" style="width: 100%;" onclick="clearTabSession('Portal is currently locked.')">Return to Login</button>
+    </div>
+  </div>
+
+  <!-- Login View -->
+  <div id="loginView" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="brand-header">
+        <div class="ngi-logo-wrap">
+          <img src="icons/app-icon-512.png?v=13" alt="NGI Official Logo" />
+        </div>
+        <h1>Next Generation Initiative</h1>
+        <p>Official Executive & Leadership Portal</p>
+      </div>
+
+      <div id="offlineLoginHint" class="info-msg" style="display: none;"></div>
+      <div id="sessionNotice" class="info-msg"></div>
+      <div id="loginError" class="error-msg"></div>
+
+      <form id="loginForm" autocomplete="off">
+        <div class="form-group">
+          <label for="loginId">Unique Member ID</label>
+          <input id="loginId" type="text" placeholder="Enter your Member ID" autocomplete="off" required />
+        </div>
+        <div class="form-group">
+          <label for="loginPass">Password</label>
+          <div class="input-row">
+            <input id="loginPass" type="password" placeholder="Enter your password" autocomplete="new-password" required />
+            <button type="button" class="toggle-pass" id="togglePassBtn">Show</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 8px; padding: 14px;">Sign In to Portal</button>
+      </form>
+
+      <div id="adminIconWrap" style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-subtle); display: none; justify-content: center;">
+        <button type="button" class="btn-outline btn-sm" id="openAdminLoginBtn">Authorized Admin Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Portal Shell -->
+  <div id="portalShell" class="app-shell">
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-brand-row">
+          <div class="sidebar-brand">
+            <img class="side-logo-img" src="icons/app-icon-192.png?v=13" alt="NGI Logo" />
+            <span>NGI Portal</span>
+          </div>
+          <button type="button" class="close-sidebar-btn" id="closeSidebarBtn" title="Close Menu">&times;</button>
+        </div>
+
+        <div class="member-mini-card">
+          <img id="sideAvatar" class="avatar" src="" alt="Profile Picture" />
+          <div style="overflow: hidden;">
+            <div id="sideName" style="font-weight: 800; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+            <div id="sideRole" style="font-size: 0.74rem; font-weight: 700; color: #60A5FA;"></div>
+            <div id="sideId" style="font-size: 0.7rem; font-weight: 700; color: var(--text-dim); margin-top: 2px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <nav id="navList" class="nav-list"></nav>
+
+      <div class="sidebar-footer">
+        <button type="button" class="btn-outline btn-sm" id="refreshDataBtn">Refresh Live Data</button>
+        <button type="button" class="btn-danger" id="logoutBtn">Secure Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button type="button" class="btn-menu-trigger" id="mobileMenuBtn" aria-label="Open Navigation Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <div>
+            <h1 id="portalTitle" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);"></h1>
+            <p id="welcomeMsg" style="font-size: 0.82rem; font-weight: 700; color: #60A5FA; margin-top: 2px;"></p>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <span id="connStatusBadge" class="badge badge-completed">Online</span>
+          <span id="notifBadge" class="badge badge-progress">Active</span>
+          <button type="button" class="btn-sync btn-sm" id="topManualSyncBtn" style="display: none;">Sync All Data</button>
+          <button type="button" class="btn-primary btn-sm" id="topAddRecordBtn">+ Add Record</button>
+        </div>
+      </header>
+
+      <div id="homeAnnouncementBanner" class="home-banner" style="display: none;"></div>
+
+      <div id="offlineSyncBanner" class="sync-banner">
+        <div>
+          <strong style="color: var(--amber-glow); display: block;" id="syncBannerTitle">Pending Offline Records Saved Locally</strong>
+          <span style="font-size: 0.84rem; color: var(--text-dim);">Your offline text & link entries are safely stored on this device.</span>
+        </div>
+      </div>
+
+      <div id="dynamicContent"></div>
+    </main>
+  </div>
+
+  <!-- Add / Edit Section Record Modal -->
+  <div id="recordModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="panel-header">
+        <h2 id="modalTitle">Add Record</h2>
+        <button type="button" class="btn-outline btn-sm" id="closeRecordModal">&times;</button>
+      </div>
+      <form id="recordForm">
+        <input type="hidden" id="editRecordId" />
+        <div class="form-group">
+          <label for="recSectionSelect">Select Section</label>
+          <select id="recSectionSelect" required></select>
+        </div>
+        <div id="sectionFieldsContainer" class="grid-2"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-outline" id="cancelRecordModal">Cancel</button>
+          <button type="submit" class="btn-primary">Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin: Create New User Modal -->
+  <div id="createMemberModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 490px;">
+      <div class="panel-header">
+        <h2>Create New User / Leader</h2>
+        <button type="button" class="btn-outline btn-sm" onclick="closeModal('createMemberModal')">&times;</button>
+      </div>
+      <form id="createMemberForm">
+        <div class="form-group">
+          <label for="newMemFullName">Full Name</label>
+          <input id="newMemFullName" type="text" placeholder="e.g. Kamran Ali" required />
+        </div>
+        <div class="form-group">
+          <label for="newMemPosition">Position / Designation</label>
+          <input id="newMemPosition" type="text" placeholder="e.g. Regional Coordinator" required />
+        </div>
+        <div class="form-group">
+          <label for="newMemSchemaRole">Role & Workspace</label>
+          <select id="newMemSchemaRole" required>
+            <option value="GENERAL_LEADER">General Leadership Workspace</option>
+            <option value="MEDIA_DIRECTOR">Media & Communications Workspace</option>
+            <option value="GEN_SECRETARY">General Secretary Workspace</option>
+            <option value="PRESIDENT">Executive / President Workspace</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="newMemId">Unique Member ID (Username)</label>
+          <div class="input-row">
+            <input id="newMemId" type="text" placeholder="e.g. NGI-5012" required />
+            <button type="button" class="toggle-pass" onclick="generateRandomMemberId('newMemId')">Generate ID</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="newMemPass">Login Password</label>
+          <input id="newMemPass" type="text" minlength="4" placeholder="Create login password" required />
+        </div>
+        <div class="form-group">
+          <label for="newMemEmail">Leader Email (For Announcement Alerts)</label>
+          <input id="newMemEmail" type="email" placeholder="leader@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="newMemAvatar">Profile Picture URL (Optional)</label>
+          <input id="newMemAvatar" type="url" placeholder="https://..." />
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+          <button type="button" class="btn-outline" onclick="closeModal('createMemberModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Create User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin: Edit User / Status / Email / Password Modal -->
+  <div id="editMemberProfileModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 490px;">
+      <div class="panel-header">
+        <h2>Edit User, Status & Credentials</h2>
+        <button type="button" class="btn-outline btn-sm" onclick="closeModal('editMemberProfileModal')">&times;</button>
+      </div>
+      <form id="editMemberProfileForm">
+        <input type="hidden" id="editOrigMemberId" />
+        <div class="form-group">
+          <label for="editFullName">Full Name</label>
+          <input id="editFullName" type="text" required />
+        </div>
+        <div class="form-group">
+          <label for="editPosition">Position / Designation</label>
+          <input id="editPosition" type="text" required />
+        </div>
+        <div class="form-group">
+          <label for="editSchemaRole">Workspace Template</label>
+          <select id="editSchemaRole" required>
+            <option value="PRESIDENT">Executive / President Workspace</option>
+            <option value="MEDIA_DIRECTOR">Media & Communications Workspace</option>
+            <option value="GEN_SECRETARY">General Secretary Workspace</option>
+            <option value="GENERAL_LEADER">General Leadership Workspace</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editNewMemberId">Unique Member ID</label>
+          <input id="editNewMemberId" type="text" required />
+        </div>
+        <div class="form-group">
+          <label for="editMemberStatus">Account Status (Active / Inactive / Suspended)</label>
+          <select id="editMemberStatus">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Suspended">Suspended</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editMemberEmail">Leader Email (For Announcement Emails)</label>
+          <input id="editMemberEmail" type="email" placeholder="leader@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="editAvatarUrl">Profile Picture URL</label>
+          <input id="editAvatarUrl" type="url" placeholder="https://..." />
+        </div>
+        <div class="form-group">
+          <label for="editNewPassword">Reset Password (Leave blank to keep current)</label>
+          <input id="editNewPassword" type="text" minlength="4" placeholder="Enter new password" />
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+          <button type="button" class="btn-outline" onclick="closeModal('editMemberProfileModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save User Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Profile & History Modal -->
+  <div id="memberDetailModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 720px;">
+      <div class="panel-header">
+        <h2 id="memberDetailTitle">User Profile & Activity</h2>
+        <button type="button" class="btn-outline btn-sm" onclick="closeModal('memberDetailModal')">&times;</button>
+      </div>
+      <div id="memberDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- Publish Notice + Optional Email Broadcast Modal -->
+  <div id="publishNoticeModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 490px;">
+      <div class="panel-header">
+        <h2>Publish Announcement</h2>
+        <button type="button" class="btn-outline btn-sm" onclick="closeModal('publishNoticeModal')">&times;</button>
+      </div>
+      <form id="publishNoticeForm">
+        <div class="form-group">
+          <label for="noticeTitleInput">Announcement Headline</label>
+          <input id="noticeTitleInput" type="text" placeholder="e.g. Executive Session Notice" required />
+        </div>
+        <div class="form-group">
+          <label for="noticePrioritySelect">Priority</label>
+          <select id="noticePrioritySelect">
+            <option value="Normal">Standard</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="noticeContentInput">Message Body</label>
+          <textarea id="noticeContentInput" placeholder="Write announcement details..." required></textarea>
+        </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+          <input id="noticeSendEmailCheckbox" type="checkbox" style="width: 18px; height: 18px;" />
+          <label for="noticeSendEmailCheckbox" style="margin: 0; text-transform: none; color: var(--text-main); font-size: 0.86rem;">
+            Send email alert to leaders with saved email addresses
+          </label>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+          <button type="button" class="btn-outline" onclick="closeModal('publishNoticeModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Publish</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reply to Direct Note Modal -->
+  <div id="replyNoteModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 460px;">
+      <div class="panel-header">
+        <h2>Reply to Leader Note</h2>
+        <button type="button" class="btn-outline btn-sm" onclick="closeModal('replyNoteModal')">&times;</button>
+      </div>
+      <form id="replyNoteForm">
+        <input type="hidden" id="replyTargetNoteId" />
+        <p id="replyNotePreview" style="font-size: 0.86rem; color: var(--text-dim); margin-bottom: 14px;"></p>
+        <div class="form-group">
+          <label for="replyNoteInput">Admin Response</label>
+          <textarea id="replyNoteInput" placeholder="Type response..." required></textarea>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-outline" onclick="closeModal('replyNoteModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Send Reply</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin: Create Application Tracking ID Modal -->
+  <div id="createAppModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 460px;">
+      <div class="panel-header">
+        <h2>New Application Entry</h2>
+        <button type="button" class="btn-outline btn-sm" onclick="closeModal('createAppModal')">&times;</button>
+      </div>
+      <form id="createAppForm">
+        <div class="form-group">
+          <label for="appApplicantName">Applicant Full Name</label>
+          <input id="appApplicantName" type="text" required />
+        </div>
+        <div class="form-group">
+          <label for="appPosition">Position / Role Applied</label>
+          <input id="appPosition" type="text" required />
+        </div>
+        <div class="form-group">
+          <label for="appContact">Contact / Email</label>
+          <input id="appContact" type="text" required />
+        </div>
+        <div class="form-group">
+          <label for="appNotes">Notes</label>
+          <textarea id="appNotes"></textarea>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-outline" onclick="closeModal('createAppModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Generate Tracking ID</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin: Update Complaint Modal -->
+  <div id="updateComplaintModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 460px;">
+      <div class="panel-header">
+        <h2>Manage Complaint</h2>
+        <button type="button" class="btn-outline btn-sm" onclick="closeModal('updateComplaintModal')">&times;</button>
+      </div>
+      <form id="updateComplaintForm">
+        <input type="hidden" id="updCompId" />
+        <div class="form-group">
+          <label for="updCompStatus">Status</label>
+          <select id="updCompStatus">
+            <option value="New">New</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="updCompAssigned">Assigned To</label>
+          <input id="updCompAssigned" type="text" value="NGI System Admin" />
+        </div>
+        <div class="form-group">
+          <label for="updCompFeedback">Admin Response / Feedback</label>
+          <textarea id="updCompFeedback"></textarea>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-outline" onclick="closeModal('updateComplaintModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Update Complaint</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Auth Modal -->
+  <div id="adminAuthModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 400px;">
+      <div class="panel-header">
+        <h2>Administrator Login</h2>
+        <button type="button" class="btn-outline btn-sm" id="closeAdminAuthModal">&times;</button>
+      </div>
+      <div id="adminAuthError" class="error-msg"></div>
+      <div id="adminAuthBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycby5LnAXTM3zjVtaON1vBeTI4Qm9-ZvmQ3wlSNPyF3SkGMmoahT2UJzp04i4II2Xxmp6/exec";
+    const NGI_LOGO_URL = "icons/app-icon-512.png?v=13";
+
+    const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+    const SESSION_KEY = "ngi_tab_session_v3";
+
+    localStorage.removeItem("ngi_user_session");
+    sessionStorage.removeItem("ngi_user_session");
+
+    const IDB_NAME = "NGI_Portal_Offline_DB";
+    const IDB_VERSION = 1;
+    const STORE_QUEUE = "offline_records_queue";
+    const STORE_META = "portal_offline_meta";
+
+    function openOfflineDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_QUEUE)) {
+            const store = db.createObjectStore(STORE_QUEUE, { keyPath: "recordId" });
+            store.createIndex("memberId", "memberId", { unique: false });
+          }
+          if (!db.objectStoreNames.contains(STORE_META)) {
+            db.createObjectStore(STORE_META, { keyPath: "key" });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function idbPutOfflineRecord(recordObj) {
+      const db = await openOfflineDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_QUEUE, "readwrite");
+        tx.objectStore(STORE_QUEUE).put(recordObj);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function idbGetAllPendingRecords(memberId = null) {
+      const db = await openOfflineDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_QUEUE, "readonly");
+        const req = tx.objectStore(STORE_QUEUE).getAll();
+        req.onsuccess = () => {
+          const all = req.result || [];
+          if (memberId) {
+            resolve(all.filter(item => String(item.memberId).toLowerCase() === String(memberId).toLowerCase()));
+          } else {
+            resolve(all);
+          }
+        };
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function idbDeletePendingRecord(recordId) {
+      const db = await openOfflineDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_QUEUE, "readwrite");
+        tx.objectStore(STORE_QUEUE).delete(recordId);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function idbSaveMeta(key, value) {
+      const db = await openOfflineDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_META, "readwrite");
+        tx.objectStore(STORE_META).put({ key, value });
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function idbGetMeta(key) {
+      const db = await openOfflineDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_META, "readonly");
+        const req = tx.objectStore(STORE_META).get(key);
+        req.onsuccess = () => resolve(req.result ? req.result.value : null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function computeCredentialHash(memberId, password) {
+      const raw = `${String(memberId).trim().toLowerCase()}::${password}::NGI_OFFLINE_LOCK_2026`;
+      const buf = new TextEncoder().encode(raw);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", buf);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function cacheUserForOfflineUnlock(userObj, plainPassword) {
+      try {
+        const credHash = await computeCredentialHash(userObj.memberId, plainPassword);
+        const existingAuths = (await idbGetMeta("offline_auth_profiles")) || {};
+        existingAuths[String(userObj.memberId).toLowerCase()] = {
+          user: userObj,
+          credHash,
+          updatedAt: Date.now()
+        };
+        await idbSaveMeta("offline_auth_profiles", existingAuths);
+      } catch (e) {}
+    }
+
+    async function verifyOfflineLogin(memberId, plainPassword) {
+      try {
+        const existingAuths = (await idbGetMeta("offline_auth_profiles")) || {};
+        const entry = existingAuths[String(memberId).trim().toLowerCase()];
+        if (!entry) return null;
+        const inputHash = await computeCredentialHash(memberId, plainPassword);
+        return inputHash === entry.credHash ? entry.user : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function generateRandomMemberId(inputId) {
+      const code = Math.floor(1000 + Math.random() * 9000);
+      document.getElementById(inputId).value = `NGI-${code}`;
+    }
+
+    const ROLE_SCHEMAS = {
+      "PRESIDENT": {
+        portalTitle: "Founder & President Portal",
+        defaultAvatar: "https://drive.google.com/thumbnail?id=1k5DRLmp4i9syfFFmfRM36kF3P2_u-qiT&sz=w400",
+        sections: {
+          "Decisions": {
+            label: "Organizational Decisions",
+            statusField: "DecisionStatus",
+            fields: [
+              { name: "DecisionTitle", label: "Decision Title", type: "text", required: true },
+              { name: "DecisionDate", label: "Decision Date", type: "date", required: true },
+              { name: "DecisionStatus", label: "Decision Status", type: "select", options: ["Approved", "Pending", "Under Review"], required: true },
+              { name: "ReferenceLink", label: "Reference / YouTube Link", type: "url", required: false },
+              { name: "DecisionDetails", label: "Decision Details", type: "textarea", required: true }
+            ]
+          },
+          "Projects": {
+            label: "Projects & Initiatives",
+            statusField: "ProjectStatus",
+            fields: [
+              { name: "ProjectName", label: "Project Name", type: "text", required: true },
+              { name: "AssignedDepartment", label: "Assigned Department", type: "text", required: true },
+              { name: "ProjectStartDate", label: "Start Date", type: "date", required: true },
+              { name: "ProjectDeadline", label: "Deadline", type: "date", required: true },
+              { name: "ProjectStatus", label: "Project Status", type: "select", options: ["In Progress", "Pending", "Completed"], required: true },
+              { name: "ReferenceLink", label: "Reference Link", type: "url", required: false },
+              { name: "ProjectDescription", label: "Project Description", type: "textarea", required: true }
+            ]
+          },
+          "Team_Management": {
+            label: "Team Management",
+            statusField: "PerformanceStatus",
+            fields: [
+              { name: "MemberName", label: "Member Name", type: "text", required: true },
+              { name: "MemberPosition", label: "Member Position", type: "text", required: true },
+              { name: "Department", label: "Department", type: "text", required: true },
+              { name: "PerformanceStatus", label: "Performance Status", type: "select", options: ["Completed", "In Progress", "Pending"], required: true },
+              { name: "ReferenceLink", label: "Reference Link", type: "url", required: false },
+              { name: "AssignedResponsibilities", label: "Assigned Responsibilities", type: "textarea", required: true }
+            ]
+          },
+          "Org_Reports": {
+            label: "Organizational Reports",
+            statusField: null,
+            fields: [
+              { name: "ReportTitle", label: "Report Title", type: "text", required: true },
+              { name: "ReportingPeriod", label: "Reporting Period", type: "text", required: true },
+              { name: "ReferenceLink", label: "Report / Video Link", type: "url", required: false },
+              { name: "ReportDescription", label: "Report Description", type: "textarea", required: true },
+              { name: "ProgressDetails", label: "Progress Details", type: "textarea", required: true }
+            ]
+          },
+          "Instructions": {
+            label: "Important Instructions",
+            statusField: null,
+            fields: [
+              { name: "InstructionTitle", label: "Instruction Title", type: "text", required: true },
+              { name: "IssueDate", label: "Issue Date", type: "date", required: true },
+              { name: "RelatedDepartment", label: "Related Department", type: "text", required: true },
+              { name: "ReferenceLink", label: "Reference Link", type: "url", required: false },
+              { name: "InstructionDetails", label: "Instruction Details", type: "textarea", required: true }
+            ]
+          },
+          "Future_Planning": {
+            label: "Future Planning",
+            statusField: "PriorityLevel",
+            fields: [
+              { name: "PlanningTitle", label: "Planning Title", type: "text", required: true },
+              { name: "TargetDate", label: "Target Date", type: "date", required: true },
+              { name: "PriorityLevel", label: "Priority Level", type: "select", options: ["High", "Medium", "Low"], required: true },
+              { name: "ReferenceLink", label: "Reference Link", type: "url", required: false },
+              { name: "PlanningDetails", label: "Planning Details", type: "textarea", required: true }
+            ]
+          }
+        }
+      },
+      "MEDIA_DIRECTOR": {
+        portalTitle: "Media & Communications Portal",
+        defaultAvatar: "https://drive.google.com/thumbnail?id=19yL7iHRIHVraJ_0dmVhLEJ2ixosKkfLe&sz=w400",
+        sections: {
+          "Social_Media": {
+            label: "Social Media Activities",
+            statusField: "ActivityStatus",
+            fields: [
+              { name: "PlatformName", label: "Platform Name", type: "select", options: ["Facebook", "Instagram", "TikTok", "YouTube", "X", "Other"], required: true },
+              { name: "PostTitle", label: "Post Title", type: "text", required: true },
+              { name: "PostLink", label: "Post / YouTube Link", type: "url", required: false },
+              { name: "PublicationDate", label: "Publication Date", type: "date", required: true },
+              { name: "ActivityStatus", label: "Activity Status", type: "select", options: ["Completed", "Pending", "Scheduled"], required: true },
+              { name: "PostDescription", label: "Post Description", type: "textarea", required: true }
+            ]
+          },
+          "Media_Coverage": {
+            label: "Media Coverage",
+            statusField: null,
+            fields: [
+              { name: "NewsTitle", label: "News Title", type: "text", required: true },
+              { name: "MediaOrganizationName", label: "Media Organization", type: "text", required: true },
+              { name: "NewsLink", label: "News / Video Link", type: "url", required: false },
+              { name: "PublicationDate", label: "Publication Date", type: "date", required: true },
+              { name: "CoverageDetails", label: "Coverage Details", type: "textarea", required: true }
+            ]
+          },
+          "Press_Releases": {
+            label: "Press Releases",
+            statusField: null,
+            fields: [
+              { name: "PressReleaseTitle", label: "Press Release Title", type: "text", required: true },
+              { name: "IssueDate", label: "Issue Date", type: "date", required: true },
+              { name: "MediaContact", label: "Media Contact", type: "text", required: true },
+              { name: "ReferenceLink", label: "Reference Link", type: "url", required: false },
+              { name: "PressReleaseContent", label: "Press Release Content", type: "textarea", required: true }
+            ]
+          },
+          "Media_Campaigns": {
+            label: "Media Campaigns",
+            statusField: "CampaignStatus",
+            fields: [
+              { name: "CampaignName", label: "Campaign Name", type: "text", required: true },
+              { name: "TargetAudience", label: "Target Audience", type: "text", required: true },
+              { name: "CampaignStartDate", label: "Start Date", type: "date", required: true },
+              { name: "CampaignEndDate", label: "End Date", type: "date", required: true },
+              { name: "CampaignStatus", label: "Campaign Status", type: "select", options: ["In Progress", "Pending", "Completed"], required: true },
+              { name: "ReferenceLink", label: "Campaign Link", type: "url", required: false },
+              { name: "CampaignDescription", label: "Campaign Description", type: "textarea", required: true }
+            ]
+          },
+          "Photo_Videos": {
+            label: "YouTube & Media Links",
+            statusField: null,
+            fields: [
+              { name: "ActivityName", label: "Activity Name", type: "text", required: true },
+              { name: "EventDate", label: "Event Date", type: "date", required: true },
+              { name: "VideoLink", label: "YouTube Video Link", type: "url", required: true },
+              { name: "Description", label: "Description", type: "textarea", required: true }
+            ]
+          },
+          "Media_Team": {
+            label: "Media Team Management",
+            statusField: "TaskStatus",
+            fields: [
+              { name: "TeamMemberName", label: "Team Member Name", type: "text", required: true },
+              { name: "AssignedTask", label: "Assigned Task", type: "text", required: true },
+              { name: "TaskDeadline", label: "Task Deadline", type: "date", required: true },
+              { name: "TaskStatus", label: "Task Status", type: "select", options: ["Pending", "In Progress", "Completed"], required: true },
+              { name: "ReferenceLink", label: "Reference Link", type: "url", required: false }
+            ]
+          },
+          "Monthly_Media_Reports": {
+            label: "Monthly Media Reports",
+            statusField: null,
+            fields: [
+              { name: "ReportMonth", label: "Report Month", type: "month", required: true },
+              { name: "TotalPostsPublished", label: "Total Posts Published", type: "number", required: true },
+              { name: "TotalMediaCoverage", label: "Total Media Coverage", type: "number", required: true },
+              { name: "ReferenceLink", label: "Report Link", type: "url", required: false },
+              { name: "CampaignDetails", label: "Campaign Details", type: "textarea", required: true },
+              { name: "MonthlyPerformanceSummary", label: "Performance Summary", type: "textarea", required: true }
+            ]
+          }
+        }
+      },
+      "GEN_SECRETARY": {
+        portalTitle: "General Secretary Portal",
+        defaultAvatar: "https://drive.google.com/thumbnail?id=1U-UltejCAiLrARiSRvKxgkpHkQ471JIX&sz=w400",
+        sections: {
+          "Meetings": {
+            label: "Meeting Management",
+            statusField: "MeetingStatus",
+            fields: [
+              { name: "MeetingTitle", label: "Meeting Title", type: "text", required: true },
+              { name: "MeetingDate", label: "Meeting Date", type: "date", required: true },
+              { name: "MeetingTime", label: "Meeting Time", type: "time", required: true },
+              { name: "MeetingVenue", label: "Meeting Venue", type: "text", required: true },
+              { name: "MeetingStatus", label: "Meeting Status", type: "select", options: ["Pending", "Completed", "Cancelled"], required: true },
+              { name: "ReferenceLink", label: "Meeting / Video Link", type: "url", required: false },
+              { name: "Participants", label: "Participants", type: "textarea", required: true },
+              { name: "MeetingAgenda", label: "Meeting Agenda", type: "textarea", required: true }
+            ]
+          },
+          "Meeting_Minutes": {
+            label: "Meeting Minutes",
+            statusField: null,
+            fields: [
+              { name: "MeetingTitle", label: "Meeting Title", type: "text", required: true },
+              { name: "MeetingDate", label: "Meeting Date", type: "date", required: true },
+              { name: "ReferenceLink", label: "Minutes Link", type: "url", required: false },
+              { name: "DiscussionDetails", label: "Discussion Details", type: "textarea", required: true },
+              { name: "DecisionsMade", label: "Decisions Made", type: "textarea", required: true },
+              { name: "FollowUpActions", label: "Follow-up Actions", type: "textarea", required: true }
+            ]
+          },
+          "Membership_Records": {
+            label: "Membership Records",
+            statusField: "MembershipStatus",
+            fields: [
+              { name: "MemberFullName", label: "Member Full Name", type: "text", required: true },
+              { name: "MembershipID", label: "Membership ID", type: "text", required: true },
+              { name: "Department", label: "Department", type: "text", required: true },
+              { name: "Designation", label: "Designation", type: "text", required: true },
+              { name: "JoiningDate", label: "Joining Date", type: "date", required: true },
+              { name: "ContactDetails", label: "Contact Details", type: "text", required: true },
+              { name: "MembershipStatus", label: "Membership Status", type: "select", options: ["Active", "Pending", "Inactive"], required: true },
+              { name: "ReferenceLink", label: "Profile Link", type: "url", required: false }
+            ]
+          },
+          "Correspondence": {
+            label: "Official Correspondence",
+            statusField: null,
+            fields: [
+              { name: "LetterSubject", label: "Letter Subject", type: "text", required: true },
+              { name: "RecipientName", label: "Recipient Name", type: "text", required: true },
+              { name: "OrganizationName", label: "Organization Name", type: "text", required: true },
+              { name: "LetterDate", label: "Letter Date", type: "date", required: true },
+              { name: "ReferenceLink", label: "Reference Link", type: "url", required: false },
+              { name: "LetterDetails", label: "Letter Details", type: "textarea", required: true }
+            ]
+          },
+          "Notifications": {
+            label: "Official Notifications",
+            statusField: "NotificationStatus",
+            fields: [
+              { name: "NotificationTitle", label: "Notification Title", type: "text", required: true },
+              { name: "IssueDate", label: "Issue Date", type: "date", required: true },
+              { name: "RelatedDepartment", label: "Related Department", type: "text", required: true },
+              { name: "NotificationStatus", label: "Notification Status", type: "select", options: ["Completed", "Pending", "Archived"], required: true },
+              { name: "ReferenceLink", label: "Reference Link", type: "url", required: false },
+              { name: "NotificationDetails", label: "Notification Details", type: "textarea", required: true }
+            ]
+          },
+          "Org_Documents": {
+            label: "Organizational Documents",
+            statusField: null,
+            fields: [
+              { name: "DocumentTitle", label: "Document Title", type: "text", required: true },
+              { name: "DocumentCategory", label: "Document Category", type: "text", required: true },
+              { name: "DocumentDate", label: "Document Date", type: "date", required: true },
+              { name: "ReferenceLink", label: "External Link", type: "url", required: false },
+              { name: "Description", label: "Description", type: "textarea", required: true }
+            ]
+          },
+          "Admin_Reports": {
+            label: "Administrative Reports",
+            statusField: null,
+            fields: [
+              { name: "ReportTitle", label: "Report Title", type: "text", required: true },
+              { name: "ReportingMonth", label: "Reporting Month", type: "month", required: true },
+              { name: "ReferenceLink", label: "Report Link", type: "url", required: false },
+              { name: "CompletedTasks", label: "Completed Tasks", type: "textarea", required: true },
+              { name: "PendingTasks", label: "Pending Tasks", type: "textarea", required: true },
+              { name: "AdministrativeActivities", label: "Administrative Activities", type: "textarea", required: true }
+            ]
+          }
+        }
+      },
+      "GENERAL_LEADER": {
+        portalTitle: "NGI Leadership Portal",
+        defaultAvatar: NGI_LOGO_URL,
+        sections: {
+          "General_Tasks": {
+            label: "Assigned Tasks & Operations",
+            statusField: "TaskStatus",
+            fields: [
+              { name: "TaskTitle", label: "Task Title", type: "text", required: true },
+              { name: "Department", label: "Department", type: "text", required: true },
+              { name: "TaskDate", label: "Date", type: "date", required: true },
+              { name: "TaskStatus", label: "Status", type: "select", options: ["In Progress", "Pending", "Completed"], required: true },
+              { name: "ReferenceLink", label: "Reference / Video Link", type: "url", required: false },
+              { name: "TaskDetails", label: "Details", type: "textarea", required: true }
+            ]
+          },
+          "Activity_Reports": {
+            label: "Progress & Activity Reports",
+            statusField: null,
+            fields: [
+              { name: "ReportTitle", label: "Report Title", type: "text", required: true },
+              { name: "ReportingPeriod", label: "Reporting Period", type: "text", required: true },
+              { name: "ReferenceLink", label: "Reference Link", type: "url", required: false },
+              { name: "Summary", label: "Report Summary", type: "textarea", required: true }
+            ]
+          }
+        }
+      }
+    };
+
+    function getValidTabSession() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.user || !parsed.loginAt) {
+          localStorage.removeItem(SESSION_KEY);
+          return null;
+        }
+        if (Date.now() - parsed.loginAt > SESSION_MAX_AGE_MS) {
+          localStorage.removeItem(SESSION_KEY);
+          return null;
+        }
+        return parsed.user;
+      } catch (e) {
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+    }
+
+    function saveTabSession(userObj) {
+      sessionUser = userObj;
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        user: userObj,
+        loginAt: Date.now()
+      }));
+      setTimeout(() => { try { ngxRegisterPush(); } catch (e) {} }, 800);
+    }
+
+    function clearTabSession(noticeMsg = "") {
+      closeSidebar();
+      document.getElementById("lockdownScreen").style.display = "none";
+      sessionUser = null;
+      dashboardCache = {
+        records: {}, activityFeed: [], members: [], notices: [],
+        directNotes: [], complaints: [], applications: [], settings: {}, systemStatus: {}
+      };
+      pendingQueueCache = [];
+      localStorage.removeItem(SESSION_KEY);
+      document.getElementById("loginId").value = "";
+      document.getElementById("loginPass").value = "";
+
+      const notice = document.getElementById("sessionNotice");
+      if (noticeMsg) {
+        notice.textContent = noticeMsg;
+        notice.style.display = "block";
+      } else {
+        notice.style.display = "none";
+      }
+      renderBoot();
+    }
+
+    let sessionUser = getValidTabSession();
+    let dashboardCache = {
+      records: {}, activityFeed: [], members: [], notices: [],
+      directNotes: [], complaints: [], applications: [], settings: {}, systemStatus: {}
+    };
+    let pendingQueueCache = [];
+    let activeNav = sessionUser?.role === "ADMIN" ? "admin_overview" : "overview";
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = "none";
+    }
+
+    function updateConnectivityUI() {
+      const online = navigator.onLine;
+      const badge = document.getElementById("connStatusBadge");
+      const loginHint = document.getElementById("offlineLoginHint");
+      if (badge) {
+        badge.textContent = online ? "Online" : "Offline";
+        badge.className = `badge ${online ? "badge-completed" : "badge-pending"}`;
+      }
+      if (loginHint) {
+        if (!online) {
+          loginHint.textContent = "Offline Mode: Sign in with your verified Member ID & Password to save entries locally.";
+          loginHint.style.display = "block";
+        } else {
+          loginHint.style.display = "none";
+        }
+      }
+    }
+
+    let isAutoSyncRunning = false;
+    async function runBackgroundAutoSync() {
+      if (!navigator.onLine || isAutoSyncRunning) return;
+      const validUser = getValidTabSession();
+      if (!validUser) return;
+      const pendingItems = await idbGetAllPendingRecords(validUser.memberId);
+      if (!pendingItems || pendingItems.length === 0) return;
+
+      isAutoSyncRunning = true;
+      try {
+        let syncedCount = 0;
+        for (let i = 0; i < pendingItems.length; i++) {
+          const item = pendingItems[i];
+          const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              token: validUser.token,
+              action: "saveRecord",
+              memberId: item.memberId,
+              role: validUser.role,
+              section: item.section,
+              recordId: item.recordId,
+              isOfflineNew: Boolean(item.isOfflineNew),
+              createdAt: item.createdAt,
+              fields: item.fields
+            })
+          });
+          const resData = await response.json();
+          if (resData && resData.success === true) {
+            await idbDeletePendingRecord(item.recordId);
+            syncedCount++;
+          }
+        }
+        if (syncedCount > 0) {
+          await refreshPendingCache();
+          await loadAndRender();
+        }
+      } catch (e) {} finally {
+        isAutoSyncRunning = false;
+      }
+    }
+
+    window.addEventListener("online", () => {
+      updateConnectivityUI();
+      runBackgroundAutoSync();
+    });
+    window.addEventListener("offline", updateConnectivityUI);
+
+    function openSidebar() {
+      document.getElementById("sidebar").classList.add("open");
+      document.getElementById("sidebarBackdrop").classList.add("show");
+    }
+    function closeSidebar() {
+      document.getElementById("sidebar").classList.remove("open");
+      document.getElementById("sidebarBackdrop").classList.remove("show");
+    }
+
+    document.getElementById("mobileMenuBtn").addEventListener("click", openSidebar);
+    document.getElementById("closeSidebarBtn").addEventListener("click", closeSidebar);
+    document.getElementById("sidebarBackdrop").addEventListener("click", closeSidebar);
+
+    function showLoader(msg = "Processing...") {
+      document.getElementById("loaderText").textContent = msg;
+      document.getElementById("loaderOverlay").style.display = "flex";
+    }
+    function hideLoader() {
+      document.getElementById("loaderOverlay").style.display = "none";
+    }
+
+    async function callApi(payload, loadingMsg, silentNetworkError = false) {
+      if (!navigator.onLine) {
+        return { success: false, offline: true, message: "Device is offline." };
+      }
+      showLoader(loadingMsg);
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(Object.assign({ token: (sessionUser && sessionUser.token) || "" }, payload))
+        });
+        const data = await res.json();
+        hideLoader();
+        if (data && data.authExpired) { clearTabSession(data.message || "Session expired. Please sign in again."); }
+        return data;
+      } catch (err) {
+        hideLoader();
+        if (!silentNetworkError) {
+          alert("Network error connecting to NGI Server: " + err.message);
+        }
+        return { success: false, offline: true, message: err.message };
+      }
+    }
+
+    document.addEventListener("error", (e) => {
+      if (e.target.tagName === "IMG" && !e.target.dataset.fallback) {
+        e.target.dataset.fallback = "true";
+        const name = e.target.alt || "NGI";
+        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1D4ED8&color=ffffff&bold=true`;
+      }
+    }, true);
+
+    document.getElementById("togglePassBtn").addEventListener("click", () => {
+      const inp = document.getElementById("loginPass");
+      const show = inp.type === "password";
+      inp.type = show ? "text" : "password";
+      document.getElementById("togglePassBtn").textContent = show ? "Hide" : "Show";
+    });
+
+    // Member Login
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const memberId = document.getElementById("loginId").value.trim();
+      const password = document.getElementById("loginPass").value;
+      const errBox = document.getElementById("loginError");
+      document.getElementById("sessionNotice").style.display = "none";
+      errBox.style.display = "none";
+
+      if (navigator.onLine) {
+        const res = await callApi({ action: "login", memberId, password }, "Verifying Credentials...", true);
+        if (res.success) {
+          if (res.user.role === "ADMIN") {
+            errBox.textContent = "Use the Authorized Admin Login button below for Admin access.";
+            errBox.style.display = "block";
+            return;
+          }
+          await cacheUserForOfflineUnlock(res.user, password);
+          res.user.token = res.token;
+          saveTabSession(res.user);
+          activeNav = "overview";
+          await loadAndRender();
+          return;
+        } else if (res.locked) {
+          document.getElementById("lockdownMessageText").textContent = res.message;
+          document.getElementById("lockdownScreen").style.display = "flex";
+          return;
+        } else if (!res.offline) {
+          errBox.textContent = res.message || "Invalid credentials.";
+          errBox.style.display = "block";
+          return;
+        }
+      }
+
+      const offlineUser = await verifyOfflineLogin(memberId, password);
+      if (offlineUser && offlineUser.role !== "ADMIN") {
+        saveTabSession(offlineUser);
+        activeNav = "overview";
+        await loadAndRender();
+      } else {
+        errBox.textContent = navigator.onLine
+          ? "Unable to reach server and no offline credentials cached."
+          : "Offline Login Failed: Enter the exact Member ID & Password previously verified online.";
+        errBox.style.display = "block";
+      }
+    });
+
+    // Admin Login
+    document.getElementById("openAdminLoginBtn").addEventListener("click", () => ngxOpenAdmin());
+    document.getElementById("closeAdminAuthModal").addEventListener("click", () => closeModal("adminAuthModal"));
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      const u = sessionUser;
+      if (u && u.token) fetch(API_URL, { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: u.role === "ADMIN" ? "adminLogout" : "userLogout", token: u.token }) }).catch(() => {});
+      clearTabSession("You have been securely logged out.");
+    });
+    document.getElementById("refreshDataBtn").addEventListener("click", () => {
+      closeSidebar();
+      if (!getValidTabSession()) return clearTabSession("Session expired. Please sign in again.");
+      loadAndRender();
+    });
+
+    async function triggerManualSync() {
+      closeSidebar();
+      const validUser = getValidTabSession();
+      if (!validUser) return clearTabSession("Session expired. Sign in again to sync offline records.");
+      if (!navigator.onLine) return alert("Currently offline. Connect to the internet and press Sync again.");
+
+      const pendingItems = await idbGetAllPendingRecords(sessionUser.memberId);
+      let syncedCount = 0;
+      for (let i = 0; i < pendingItems.length; i++) {
+        const item = pendingItems[i];
+        const resData = await callApi({
+          action: "saveRecord",
+          memberId: item.memberId,
+          role: validUser.role,
+          section: item.section,
+          recordId: item.recordId,
+          isOfflineNew: Boolean(item.isOfflineNew),
+          createdAt: item.createdAt,
+          fields: item.fields
+        }, `Syncing ${i + 1}/${pendingItems.length}...`, true);
+        if (resData && resData.success) {
+          await idbDeletePendingRecord(item.recordId);
+          syncedCount++;
+        }
+      }
+      await refreshPendingCache();
+      await loadAndRender();
+      alert(`Sync Complete: ${syncedCount} offline record(s) uploaded and all portal data refreshed.`);
+    }
+
+    document.getElementById("topManualSyncBtn").addEventListener("click", triggerManualSync);
+
+    async function refreshPendingCache() {
+      if (!sessionUser) {
+        pendingQueueCache = [];
+        return;
+      }
+      pendingQueueCache = await idbGetAllPendingRecords(sessionUser.memberId);
+      const count = pendingQueueCache.length;
+      const topBtn = document.getElementById("topManualSyncBtn");
+      const banner = document.getElementById("offlineSyncBanner");
+      if (topBtn) { topBtn.style.display = sessionUser ? "inline-flex" : "none"; topBtn.textContent = count > 0 ? `Sync All Data (${count} pending)` : "Sync All Data"; }
+      if (banner) banner.style.display = count > 0 ? "flex" : "none";
+      const title = document.getElementById("syncBannerTitle");
+      if (title && count > 0) title.textContent = `${count} Offline Record(s) Waiting for Sync`;
+    }
+
+    async function loadAndRender() {
+      updateConnectivityUI();
+      const validUser = getValidTabSession();
+      if (!validUser) {
+        sessionUser = null;
+        return renderBoot();
+      }
+      sessionUser = validUser;
+      await refreshPendingCache();
+
+      if (navigator.onLine) {
+        const res = await callApi({
+          action: "getDashboardData",
+          memberId: sessionUser.memberId,
+          role: sessionUser.role
+        }, "Loading Live Portal...", true);
+
+        if (res.locked) {
+          document.getElementById("lockdownMessageText").textContent = res.message;
+          document.getElementById("lockdownScreen").style.display = "flex";
+          return;
+        }
+
+        if (res.success && res.data) {
+          dashboardCache = res.data;
+          applyBranding(res.data.settings);
+          const freshProfile = (res.data.members || []).find(m => String(m.memberId).toLowerCase() === String(sessionUser.memberId).toLowerCase());
+          if (freshProfile) {
+            sessionUser.fullName = freshProfile.fullName;
+            sessionUser.position = freshProfile.position;
+            sessionUser.role = freshProfile.role;
+            sessionUser.avatar = freshProfile.avatar || sessionUser.avatar;
+            sessionUser.email = freshProfile.email || sessionUser.email;
+            saveTabSession(sessionUser);
+          }
+          await idbSaveMeta(`cached_dashboard_${sessionUser.memberId}`, res.data);
+        } else {
+          const cached = await idbGetMeta(`cached_dashboard_${sessionUser.memberId}`);
+          if (cached) dashboardCache = cached;
+        }
+      } else {
+        const cached = await idbGetMeta(`cached_dashboard_${sessionUser.memberId}`);
+        if (cached) dashboardCache = cached;
+      }
+
+      renderBoot();
+    }
+
+    function renderBoot() {
+      updateConnectivityUI();
+      const loginView = document.getElementById("loginView");
+      const portalShell = document.getElementById("portalShell");
+
+      if (!sessionUser) {
+        loginView.style.display = "flex";
+        portalShell.style.display = "none";
+        return;
+      }
+
+      loginView.style.display = "none";
+      portalShell.style.display = "block";
+
+      const homeBanner = document.getElementById("homeAnnouncementBanner");
+      const bannerTxt = dashboardCache.settings?.homeBannerText;
+      if (bannerTxt) {
+        homeBanner.innerHTML = "";
+        const tickerTrack = document.createElement("span");
+        tickerTrack.className = "ngi-ticker-track";
+        tickerTrack.textContent = bannerTxt;
+        homeBanner.appendChild(tickerTrack);
+        homeBanner.style.display = "block";
+      } else {
+        homeBanner.innerHTML = "";
+        homeBanner.style.display = "none";
+      }
+
+      if (sessionUser.role === "ADMIN") {
+        renderAdminDashboard();
+      } else {
+        renderMemberDashboard();
+      }
+    }
+
+    function getRoleSchema(role) {
+      const base = ROLE_SCHEMAS[role] || ROLE_SCHEMAS["GENERAL_LEADER"];
+      return {
+        portalTitle: "NGI Member Workspace",
+        defaultAvatar: base.defaultAvatar || "",
+        sections: {
+          "Work_Activities": {
+            label: "Work & Activity Reports",
+            statusField: "ActivityStatus",
+            fields: [
+              { name: "ActivityDate", label: "Activity Date", type: "date", required: true },
+              { name: "ActivityTitle", label: "Work / Activity Title", type: "text", required: true },
+              { name: "ActivityDescription", label: "Description of Work", type: "textarea", required: true },
+              { name: "PhotoData", label: "Upload Activity Photo", type: "file", required: false },
+              { name: "ActivityStatus", label: "Status", type: "select", options: ["Submitted", "In Progress", "Completed"], required: true }
+            ]
+          }
+        }
+      };
+    }
+
+    function flattenMemberRecords(memberId, role) {
+      const schema = getRoleSchema(role);
+      const all = [];
+
+      pendingQueueCache.forEach((p) => {
+        if (String(p.memberId).toLowerCase() === String(memberId).toLowerCase() && schema.sections[p.section]) {
+          all.push({
+            ...p.fields,
+            RecordID: p.recordId,
+            MemberID: p.memberId,
+            CreatedAt: p.createdAt,
+            UpdatedAt: p.updatedAt,
+            _sectionKey: p.section,
+            _sectionLabel: schema.sections[p.section].label,
+            _isOfflinePending: true
+          });
+        }
+      });
+
+      const pendingIds = new Set(pendingQueueCache.map(p => p.recordId));
+      Object.keys(schema.sections).forEach((secKey) => {
+        const rows = dashboardCache.records[secKey] || [];
+        rows.forEach((r) => {
+          if (String(r.MemberID).toLowerCase() === String(memberId).toLowerCase() && !pendingIds.has(r.RecordID)) {
+            all.push({
+              ...r,
+              _sectionKey: secKey,
+              _sectionLabel: schema.sections[secKey].label,
+              _isOfflinePending: false
+            });
+          }
+        });
+      });
+
+      return all;
+    }
+
+    function renderNoticeBoardHtml(canManage) {
+      const notices = dashboardCache.notices || [];
+      return `
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Announcements & Notice Board</h2>
+            ${canManage ? `<button type="button" class="btn-primary btn-sm" onclick="openPublishNoticeModal()">+ Post Announcement</button>` : ""}
+          </div>
+          ${notices.length === 0
+            ? `<p style="color: var(--text-dim); font-size: 0.88rem;">No announcements posted yet.</p>`
+            : notices.map(n => `
+              <div class="notice-card ${n.priority === "Urgent" ? "urgent" : ""}">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px;">
+                  <strong style="font-size: 0.98rem; color: var(--text-main);">${n.title}</strong>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span class="badge ${n.priority === "Urgent" ? "badge-inactive" : "badge-progress"}">${n.priority}</span>
+                    ${canManage ? `<button type="button" class="btn-outline btn-sm" onclick="editNoticeItem('${n.noticeId}')">Edit</button><button type="button" class="btn-danger btn-sm" onclick="deleteNoticeItem('${n.noticeId}')">Delete</button>` : ""}
+                  </div>
+                </div>
+                <p style="font-size: 0.88rem; color: var(--text-dim); margin-bottom: 8px;">${n.content}</p>
+                <div style="font-size: 0.74rem; color: #60A5FA; font-weight: 700;">
+                  Posted by ${n.authorName} • ${new Date(n.timestamp).toLocaleDateString()}${n.emailSentCount ? ` • Emailed ${n.emailSentCount} leader(s)` : ""}
+                </div>
+              </div>
+            `).join("")
+          }
+        </div>
+      `;
+    }
+
+    function renderDirectNotesHtml(isAdmin) {
+      const notes = dashboardCache.directNotes || [];
+      let formHtml = "";
+      if (!isAdmin) {
+        formHtml = `
+          <form id="memberDirectNoteForm" style="margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border-subtle);">
+            <div class="form-group">
+              <label for="noteSubjectInput">Subject</label>
+              <input id="noteSubjectInput" type="text" placeholder="e.g. Schedule or approval note" required />
+            </div>
+            <div class="form-group">
+              <label for="noteMessageInput">Note to Administrator</label>
+              <textarea id="noteMessageInput" placeholder="Write your message to Admin..." required></textarea>
+            </div>
+            <button type="submit" class="btn-primary btn-sm">Send Note to Admin</button>
+          </form>
+        `;
+      }
+
+      const listHtml = notes.length === 0
+        ? `<p style="color: var(--text-dim); font-size: 0.88rem;">No notes recorded yet.</p>`
+        : `<div class="record-stream">
+            ${notes.map(n => `
+              <div class="record-ticket ${n.status === "Answered" ? "status-done" : "status-wait"}">
+                <div class="ticket-header">
+                  <span class="badge badge-progress">${isAdmin ? `${n.memberName} (${n.position})` : "Sent to Admin"}</span>
+                  <span class="badge ${n.status === "Answered" ? "badge-completed" : "badge-pending"}">${n.status}</span>
+                </div>
+                <div class="ticket-body">
+                  <div><strong>Subject:</strong> ${n.subject}</div>
+                  <div><strong>Note:</strong> ${n.message}</div>
+                  ${n.adminReply ? `<div style="margin-top: 6px; padding: 10px; background: rgba(16, 185, 129, 0.12); border-radius: 10px; color: var(--emerald-glow);"><strong>Admin Reply:</strong> ${n.adminReply}</div>` : ""}
+                </div>
+                <div class="ticket-footer">
+                  <span style="font-size: 0.74rem; color: var(--text-dim);">${new Date(n.timestamp).toLocaleString()}</span>
+                  ${isAdmin ? `<button type="button" class="btn-outline btn-sm" onclick="openReplyNoteModal('${n.noteId}', '${n.subject.replace(/'/g, "\\'")}')">Reply</button>` : ""}
+                </div>
+              </div>
+            `).join("")}
+          </div>`;
+
+      return `
+        <div class="panel">
+          <div class="panel-header">
+            <h2>${isAdmin ? "Leader Notes Inbox" : "Direct Note to Admin"}</h2>
+          </div>
+          ${formHtml}
+          ${listHtml}
+        </div>
+      `;
+    }
+
+    function renderComplaintsHtml(isAdmin) {
+      const list = dashboardCache.complaints || [];
+      let formHtml = "";
+      if (!isAdmin) {
+        formHtml = `
+          <form id="memberComplaintForm" style="margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border-subtle);">
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="compSubjectInput">Complaint / Support Topic</label>
+                <input id="compSubjectInput" type="text" required />
+              </div>
+              <div class="form-group">
+                <label for="compPrioritySelect">Priority</label>
+                <select id="compPrioritySelect">
+                  <option value="Normal">Normal</option>
+                  <option value="High">High</option>
+                  <option value="Urgent">Urgent</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="compDetailsInput">Details</label>
+              <textarea id="compDetailsInput" required></textarea>
+            </div>
+            <button type="submit" class="btn-primary btn-sm">Submit Complaint</button>
+          </form>
+        `;
+      }
+
+      return `
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Complaints & Support (${list.length})</h2>
+          </div>
+          ${formHtml}
+          <div class="record-stream">
+            ${list.length === 0
+              ? `<p style="color: var(--text-dim); font-size: 0.88rem;">No complaints logged.</p>`
+              : list.map(c => `
+                <div class="record-ticket ${c.status === "Resolved" ? "status-done" : "status-wait"}">
+                  <div class="ticket-header">
+                    <span class="badge badge-progress">${c.complaintId} • ${c.priority}</span>
+                    <span class="badge ${c.status === "Resolved" ? "badge-completed" : "badge-pending"}">${c.status}</span>
+                  </div>
+                  <div class="ticket-body">
+                    <div><strong>Leader:</strong> ${c.memberName} (${c.position})</div>
+                    <div><strong>Subject:</strong> ${c.subject}</div>
+                    <div><strong>Details:</strong> ${c.details}</div>
+                    <div><strong>Assigned To:</strong> ${c.assignedTo || "NGI System Admin"}</div>
+                    ${c.feedback ? `<div style="margin-top: 6px; padding: 10px; background: rgba(16, 185, 129, 0.12); border-radius: 10px; color: var(--emerald-glow);"><strong>Feedback:</strong> ${c.feedback}</div>` : ""}
+                  </div>
+                  <div class="ticket-footer">
+                    <span style="font-size: 0.74rem; color: var(--text-dim);">${new Date(c.timestamp).toLocaleString()}</span>
+                    ${isAdmin ? `<button type="button" class="btn-outline btn-sm" onclick="openUpdateComplaintModal('${c.complaintId}', '${c.status}', '${(c.assignedTo || "NGI System Admin").replace(/'/g, "\\'")}', '${(c.feedback || "").replace(/'/g, "\\'")}')">Update Status</button>` : ""}
+                  </div>
+                </div>
+              `).join("")
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMemberDashboard() {
+      const schema = getRoleSchema(sessionUser.role);
+      const avatarSrc = sessionUser.avatar || schema.defaultAvatar;
+
+      const sideAvatarEl = document.getElementById("sideAvatar");
+      delete sideAvatarEl.dataset.fallback;
+      sideAvatarEl.src = avatarSrc;
+      sideAvatarEl.alt = sessionUser.fullName;
+
+      document.getElementById("sideName").textContent = sessionUser.fullName;
+      document.getElementById("sideRole").textContent = sessionUser.position;
+      document.getElementById("sideId").textContent = `ID: ${sessionUser.memberId}`;
+
+      document.getElementById("portalTitle").textContent = schema.portalTitle;
+      document.getElementById("welcomeMsg").textContent = `${sessionUser.fullName} — ${sessionUser.position}`;
+      document.getElementById("topAddRecordBtn").style.display = "inline-block";
+
+      const myRecords = flattenMemberRecords(sessionUser.memberId, sessionUser.role);
+      let completedCount = 0;
+      let pendingCount = 0;
+      myRecords.forEach((r) => {
+        const stField = schema.sections[r._sectionKey]?.statusField;
+        const val = stField ? String(r[stField] || "") : "";
+        if (!r._isOfflinePending && (val === "Completed" || val === "Approved" || val === "Active")) completedCount++;
+        else pendingCount++;
+      });
+
+      document.getElementById("notifBadge").textContent = `${myRecords.length} Records`;
+
+      const navList = document.getElementById("navList");
+      let navHtml = `<div class="nav-label">Workspace</div>`;
+      navHtml += `<button class="nav-item ${activeNav === "overview" ? "active" : ""}" data-nav="overview"><span>Dashboard Overview</span></button>`;
+      navHtml += `<button class="nav-item ${activeNav === "direct_notes" ? "active" : ""}" data-nav="direct_notes"><span>Note to Admin</span></button>`;
+      navHtml += `<button class="nav-item ${activeNav === "complaints" ? "active" : ""}" data-nav="complaints"><span>Complaints & Support</span></button>`;
+      navHtml += `<button class="nav-item ${activeNav === "attendance" ? "active" : ""}" data-nav="attendance"><span>Attendance</span></button>`;
+      navHtml += `<button class="nav-item ${activeNav === "my_apps" ? "active" : ""}" data-nav="my_apps"><span>My Applications</span></button>`;
+      navHtml += `<div class="nav-label">Portal Sections</div>`;
+
+      Object.entries(schema.sections).forEach(([key, sec]) => {
+        const cnt = myRecords.filter(r => r._sectionKey === key).length;
+        navHtml += `
+          <button class="nav-item ${activeNav === key ? "active" : ""}" data-nav="${key}">
+            <span>${sec.label}</span>
+            <span class="badge badge-progress">${cnt}</span>
+          </button>`;
+      });
+      navList.innerHTML = navHtml;
+
+      navList.querySelectorAll(".nav-item").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          activeNav = btn.dataset.nav; ngxNavPush(activeNav);
+          closeSidebar();
+          renderMemberDashboard();
+        });
+      });
+
+      const container = document.getElementById("dynamicContent");
+
+      if (activeNav === "my_apps") { container.innerHTML = ngxMyApps(); ngxBindMyApps(); return; }
+      if (activeNav === "attendance") {
+        container.innerHTML = renderMemberAttendanceHtml();
+        bindMemberAttendanceForm();
+        return;
+      }
+
+      if (activeNav === "direct_notes") {
+        container.innerHTML = renderDirectNotesHtml(false);
+        bindMemberNoteForm();
+        return;
+      }
+
+      if (activeNav === "complaints") {
+        container.innerHTML = renderComplaintsHtml(false);
+        bindMemberComplaintForm();
+        return;
+      }
+
+      let html = `
+        <div class="stats-grid">
+          <div class="stat-card"><h3>Total Logs</h3><div class="val">${myRecords.length}</div></div>
+          <div class="stat-card"><h3>Verified</h3><div class="val" style="color: var(--emerald-glow);">${completedCount}</div></div>
+          <div class="stat-card"><h3>Pending</h3><div class="val" style="color: var(--amber-glow);">${pendingCount}</div></div>
+        </div>
+      `;
+
+      if (activeNav === "overview") {
+        html += renderMemberAttendanceSummaryPanel();
+        html += renderNoticeBoardHtml(false);
+        html += `
+          <div class="panel">
+            <div class="panel-header"><h2>Recent Activity</h2></div>
+            ${renderMemberRecentHtml(myRecords, schema)}
+          </div>
+        `;
+      }
+
+      const searchQ = (document.getElementById("searchRecordsInput")?.value || "").toLowerCase();
+      const statusFilter = document.getElementById("filterStatusSelect")?.value || "ALL";
+
+      const visibleRecords = myRecords.filter((rec) => {
+        if (activeNav !== "overview" && rec._sectionKey !== activeNav) return false;
+        const stField = schema.sections[rec._sectionKey]?.statusField;
+        const recStatus = stField ? String(rec[stField] || "Pending") : "Completed";
+        const matchQuery = !searchQ || JSON.stringify(rec).toLowerCase().includes(searchQ);
+        const matchStatus =
+          statusFilter === "ALL" ||
+          (statusFilter === "OFFLINE_PENDING" && rec._isOfflinePending) ||
+          recStatus === statusFilter;
+        return matchQuery && matchStatus;
+      });
+
+      const currentTitle = activeNav === "overview" ? "Submitted & Pending Records" : schema.sections[activeNav].label;
+
+      html += `
+        <div class="panel">
+          <div class="panel-header">
+            <h2>${currentTitle}</h2>
+            <button type="button" class="btn-primary btn-sm" onclick="openRecordModal(null, '${activeNav !== "overview" ? activeNav : ""}')">+ Add Entry</button>
+          </div>
+          <div class="filters-bar">
+            <input id="searchRecordsInput" type="text" placeholder="Search records..." value="${searchQ}" oninput="renderMemberDashboard()" />
+            <select id="filterStatusSelect" onchange="renderMemberDashboard()">
+              <option value="ALL" ${statusFilter === "ALL" ? "selected" : ""}>All Statuses</option>
+              <option value="OFFLINE_PENDING" ${statusFilter === "OFFLINE_PENDING" ? "selected" : ""}>Offline Pending</option>
+              <option value="Pending" ${statusFilter === "Pending" ? "selected" : ""}>Pending</option>
+              <option value="In Progress" ${statusFilter === "In Progress" ? "selected" : ""}>In Progress</option>
+              <option value="Completed" ${statusFilter === "Completed" ? "selected" : ""}>Completed</option>
+              <option value="Approved" ${statusFilter === "Approved" ? "selected" : ""}>Approved</option>
+            </select>
+          </div>
+          <div class="record-stream">
+            ${visibleRecords.length === 0
+              ? `<p style="text-align: center; color: var(--text-dim); padding: 24px;">No records found in this section.</p>`
+              : visibleRecords.map((rec) => {
+                  const secDef = schema.sections[rec._sectionKey];
+                  const stField = secDef.statusField;
+                  const statusVal = stField ? (rec[stField] || "Pending") : "Verified";
+                  const isDone = ["Completed", "Approved", "Active", "Verified"].includes(statusVal);
+
+                  const detailsHtml = secDef.fields.map(f => {
+                    const val = rec[f.name];
+                    if (!val) return "";
+                    if (f.type === "url") {
+                      return `<div><strong>${f.label}:</strong> <a href="${val}" target="_blank" rel="noopener" style="color: #60A5FA; text-decoration: underline;">Open Link</a></div>`;
+                    }
+                    if (f.type === "file" && /^https?:\/\//i.test(String(val))) {
+                      return `<div style="margin-top:10px;"><strong>${f.label}:</strong><br><a href="${val}" target="_blank" rel="noopener"><img src="${val}" alt="Activity photo" style="max-width:220px;max-height:180px;object-fit:contain;border-radius:12px;margin-top:8px;border:1px solid var(--border-glow);"></a></div>`;
+                    }
+                    if (f.type === "file") return "";
+                    return `<div><strong>${f.label}:</strong> ${val}</div>`;
+                  }).join("");
+
+                  return `
+                    <div class="record-ticket ${isDone && !rec._isOfflinePending ? "status-done" : "status-wait"}">
+                      <div class="ticket-header">
+                        <span class="badge badge-progress">${rec._sectionLabel}</span>
+                        <span class="badge ${rec._isOfflinePending ? "badge-pending" : (isDone ? "badge-completed" : "badge-pending")}">
+                          ${rec._isOfflinePending ? "Offline Pending" : statusVal}
+                        </span>
+                      </div>
+                      <div class="ticket-body">${detailsHtml}</div>
+                      <div class="ticket-footer">
+                        <span style="font-size: 0.76rem; color: var(--text-dim); font-weight: 700;">
+                          ${rec.UpdatedAt ? new Date(rec.UpdatedAt).toLocaleDateString() : ""}
+                        </span>
+                        <div style="display: flex; gap: 8px;">
+                          ${(sessionUser.role === "ADMIN" || rec._isOfflinePending || (Date.now() - new Date(rec.CreatedAt || 0).getTime() <= 10 * 60 * 1000 && Date.now() >= new Date(rec.CreatedAt || 0).getTime())) ? `<button type="button" class="btn-outline btn-sm" onclick="openRecordModal('${rec.RecordID}', '${rec._sectionKey}')">Edit</button>` : `<span class="badge badge-inactive">Edit closed</span>`}
+                          ${sessionUser.role === "ADMIN" ? `<button type="button" class="btn-danger btn-sm" onclick="deleteRecord('${rec.RecordID}', '${rec._sectionKey}', ${rec._isOfflinePending})">Drop</button>` : ""}
+                        </div>
+                      </div>
+                    </div>`;
+                }).join("")
+            }
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function bindMemberNoteForm() {
+      const form = document.getElementById("memberDirectNoteForm");
+      if (!form) return;
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const res = await callApi({
+          action: "submitDirectNote",
+          memberId: sessionUser.memberId,
+          subject: document.getElementById("noteSubjectInput").value,
+          message: document.getElementById("noteMessageInput").value
+        }, "Sending Note...");
+        if (res.success) {
+          alert(res.message);
+          await loadAndRender();
+        }
+      });
+    }
+
+    function bindMemberComplaintForm() {
+      const form = document.getElementById("memberComplaintForm");
+      if (!form) return;
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const res = await callApi({
+          action: "submitComplaint",
+          memberId: sessionUser.memberId,
+          subject: document.getElementById("compSubjectInput").value,
+          priority: document.getElementById("compPrioritySelect").value,
+          details: document.getElementById("compDetailsInput").value
+        }, "Submitting Complaint...");
+        if (res.success) {
+          alert(res.message);
+          await loadAndRender();
+        }
+      });
+    }
+
+    // ADMIN CONTROL PANEL (Full System Control)
+    function renderAdminDashboard() {
+      const sideAvatarEl = document.getElementById("sideAvatar");
+      delete sideAvatarEl.dataset.fallback;
+      sideAvatarEl.src = NGI_LOGO_URL;
+      sideAvatarEl.alt = "NGI Admin";
+
+      document.getElementById("sideName").textContent = "NGI System Admin";
+      document.getElementById("sideRole").textContent = "Full System Administrator";
+      document.getElementById("sideId").textContent = "ID: NGI-ADMIN";
+
+      document.getElementById("portalTitle").textContent = "NGI Admin Control Panel";
+      document.getElementById("welcomeMsg").textContent = "Full System Control, Users, Applications, Complaints & Settings";
+      document.getElementById("topAddRecordBtn").style.display = "none";
+
+      const navList = document.getElementById("navList");
+      const tabs = [
+        ["admin_overview", "System Dashboard"],
+        ["admin_users", "Users & Access Control"],
+        ["admin_apps", "Applications Tracker"],
+        ["admin_attendance", "Attendance Records"],
+        ["admin_complaints", "Complaints & Support"],
+        ["admin_notices", "Notices & Email Alerts"],
+        ["admin_email", "Send Email"],
+        ["admin_notes", "Leader Notes Inbox"],
+        ["admin_settings", "Portal & Content Settings"],
+        ["admin_devices", "Admin Devices"],
+        ["admin_audit", "Audit & Activity Logs"]
+      ];
+      navList.innerHTML = `<div class="nav-label">Admin Controls</div>` + tabs.map(([k, label]) => `
+        <button class="nav-item ${activeNav === k ? "active" : ""}" data-nav="${k}"><span>${label}</span></button>
+      `).join("");
+
+      navList.querySelectorAll(".nav-item").forEach(btn => {
+        btn.addEventListener("click", () => {
+          activeNav = btn.dataset.nav; ngxNavPush(activeNav);
+          closeSidebar();
+          renderAdminDashboard();
+        });
+      });
+
+      const nonAdminUsers = (dashboardCache.members || []).filter(m => m.role !== "ADMIN");
+      const activeUsersCount = nonAdminUsers.filter(m => m.status === "Active").length;
+      const inactiveUsersCount = nonAdminUsers.filter(m => m.status === "Inactive").length;
+      const suspendedUsersCount = nonAdminUsers.filter(m => m.status === "Suspended").length;
+      const onlineUsersCount = nonAdminUsers.filter(m => m.isOnline).length;
+
+      const apps = dashboardCache.applications || [];
+      const pendingAppsCount = apps.filter(a => a.status === "Pending").length;
+      const rejectedAppsCount = apps.filter(a => a.status === "Rejected").length;
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayRegsCount = apps.filter(a => String(a.submittedAt || "").startsWith(todayStr)).length;
+
+      const complaints = dashboardCache.complaints || [];
+      const todayComplaintsCount = complaints.filter(c => String(c.timestamp || "").startsWith(todayStr)).length;
+      const openComplaintsCount = complaints.filter(c => c.status !== "Resolved").length;
+
+      const sys = dashboardCache.systemStatus || {};
+      const container = document.getElementById("dynamicContent");
+
+      if (activeNav === "admin_users") {
+        container.innerHTML = renderAdminUsersPanel(nonAdminUsers);
+        return;
+      }
+      if (activeNav === "admin_apps") {
+        container.innerHTML = renderAdminApplicationsPanel(apps);
+        bindAdminAppForm();
+        return;
+      }
+      if (activeNav === "admin_attendance") {
+        container.innerHTML = renderAdminAttendancePanel();
+        return;
+      }
+      if (activeNav === "admin_complaints") {
+        container.innerHTML = renderComplaintsHtml(true);
+        return;
+      }
+      if (activeNav === "admin_notices") {
+        container.innerHTML = renderNoticeBoardHtml(true);
+        return;
+      }
+      if (activeNav === "admin_notes") {
+        container.innerHTML = renderDirectNotesHtml(true);
+        return;
+      }
+      if (activeNav === "admin_settings") {
+        container.innerHTML = renderAdminSettingsPanel();
+        bindAdminSettingsForm();
+        return;
+      }
+      if (activeNav === "admin_email") { container.innerHTML = ngxEmailPanel(); ngxBindEmail(); return; }
+      if (activeNav === "admin_devices") { container.innerHTML = ngxDevicesPanel(); ngxLoadDevices(); return; }
+      if (activeNav === "admin_audit") {
+        container.innerHTML = `
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Audit & Activity History</h2>
+              <button class="btn-primary btn-sm" onclick="exportAllCsv()">Export CSV</button>
+            </div>
+            ${renderActivityFeedHtml(dashboardCache.activityFeed)}
+          </div>
+        `;
+        return;
+      }
+
+      // Main Admin Overview
+      container.innerHTML = `
+        <div class="stats-grid">
+          <div class="stat-card"><h3>Registered Users</h3><div class="val">${nonAdminUsers.length}</div></div>
+          <div class="stat-card"><h3>Active Users</h3><div class="val" style="color: var(--emerald-glow);">${activeUsersCount}</div></div>
+          <div class="stat-card"><h3>Inactive Users</h3><div class="val" style="color: var(--text-dim);">${inactiveUsersCount}</div></div>
+          <div class="stat-card"><h3>Online Now</h3><div class="val" style="color: #60A5FA;">${onlineUsersCount}</div></div>
+          <div class="stat-card"><h3>Total Leaders</h3><div class="val">${nonAdminUsers.length}</div></div>
+          <div class="stat-card"><h3>Pending Approvals</h3><div class="val" style="color: var(--amber-glow);">${pendingAppsCount}</div></div>
+          <div class="stat-card"><h3>Suspended</h3><div class="val" style="color: var(--danger-red);">${suspendedUsersCount}</div></div>
+          <div class="stat-card"><h3>Total Applications</h3><div class="val">${apps.length}</div></div>
+          <div class="stat-card"><h3>Today Registrations</h3><div class="val">${todayRegsCount}</div></div>
+          <div class="stat-card"><h3>Today Complaints</h3><div class="val" style="color: var(--amber-glow);">${todayComplaintsCount}</div></div>
+        </div>
+
+        <div class="status-strip">
+          <div class="status-pill-box"><span>Server Status</span><span class="badge badge-completed">${sys.serverStatus || "Healthy"}</span></div>
+          <div class="status-pill-box"><span>Website Status</span><span class="badge ${sys.websiteStatus === "Maintenance" ? "badge-pending" : "badge-completed"}">${sys.websiteStatus || "Online"}</span></div>
+          <div class="status-pill-box"><span>App Status</span><span class="badge badge-completed">${sys.appStatus || "Active"}</span></div>
+          <div class="status-pill-box"><span>Last Backup</span><span class="badge badge-progress">${sys.lastBackupStatus || "Synced"}</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Quick Application Summary (Pending: ${pendingAppsCount} • Rejected: ${rejectedAppsCount})</h2>
+            <button type="button" class="btn-primary btn-sm" onclick="activeNav='admin_apps'; renderAdminDashboard();">Manage Applications</button>
+          </div>
+          <p style="font-size: 0.86rem; color: var(--text-dim);">Open complaints requiring attention: <strong style="color: var(--amber-glow);">${openComplaintsCount}</strong></p>
+        </div>
+
+        ${renderAdminUsersPanel(nonAdminUsers)}
+        ${renderNoticeBoardHtml(true)}
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Recent Audit & Login Activity</h2>
+            <button class="btn-primary btn-sm" onclick="exportAllCsv()">Export CSV</button>
+          </div>
+          ${renderActivityFeedHtml(dashboardCache.activityFeed)}
+        </div>
+      `;
+    }
+
+    function renderAdminUsersPanel(usersList) {
+      return `
+        <div class="panel">
+          <div class="panel-header">
+            <h2>User & Role Management (${usersList.length})</h2>
+            <button type="button" class="btn-primary btn-sm" onclick="openCreateMemberModal()">+ Create New User</button>
+          </div>
+          <div class="member-dir-grid">
+            ${usersList.map(m => {
+              const schema = getRoleSchema(m.role);
+              const pic = m.avatar || schema.defaultAvatar;
+              const statusBadge = m.status === "Active" ? "badge-completed" : (m.status === "Suspended" ? "badge-inactive" : "badge-pending");
+              const memberAttendance = (dashboardCache.attendance || []).filter(a => String(a.memberId || a.MemberID || "").toLowerCase() === String(m.memberId || "").toLowerCase());
+              const attCounts = { present: 0, absent: 0, late: 0, onDuty: 0 };
+              memberAttendance.forEach(a => { const st=String(a.status||"Present").toLowerCase(); if(st==="present")attCounts.present++; else if(st==="absent")attCounts.absent++; else if(st==="late")attCounts.late++; else if(st==="on duty"||st==="onduty")attCounts.onDuty++; });
+              const attTotal = memberAttendance.length;
+              const attRate = attTotal ? Math.round((attCounts.present+attCounts.late+attCounts.onDuty)/attTotal*100) : 0;
+              return `
+                <div class="member-dir-card">
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                      <img class="avatar" src="${pic}" alt="${m.fullName}" />
+                      <div style="overflow: hidden;">
+                        <h3 style="font-size: 1rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${m.fullName}</h3>
+                        <div style="font-size: 0.78rem; font-weight: 700; color: #60A5FA;">${m.position}</div>
+                        <div style="font-size: 0.72rem; color: var(--text-dim);">ID: ${m.memberId}</div>
+                      </div>
+                    </div>
+                    <div style="margin:10px 0 12px;padding:10px;border:1px solid var(--border-subtle);border-radius:12px;background:var(--surface-card)">
+                      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px"><strong style="font-size:.82rem">Attendance</strong><strong style="font-size:1rem;color:var(--emerald-glow)">${attRate}%</strong></div>
+                      <div style="height:7px;background:var(--surface-elevated);border-radius:99px;overflow:hidden;margin-bottom:8px"><div style="height:100%;width:${attRate}%;background:var(--emerald-glow);border-radius:99px"></div></div>
+                      <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:.72rem;color:var(--text-dim)">
+                        <span class="badge badge-progress">Total ${attTotal}</span><span class="badge badge-completed">Present ${attCounts.present}</span><span class="badge badge-pending">Late ${attCounts.late}</span><span class="badge badge-progress">On Duty ${attCounts.onDuty}</span><span class="badge badge-inactive">Absent ${attCounts.absent}</span>
+                      </div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                      <span class="badge ${statusBadge}">${m.status}</span>
+                      <span class="badge ${m.isOnline ? "badge-completed" : "badge-progress"}">${m.isOnline ? "Online" : "Offline"}</span>
+                    </div>
+                    <div style="font-size: 0.74rem; color: var(--text-dim);">
+                      Email: ${m.email || "Not set"}<br/>
+                      Last Login: ${m.lastLogin ? new Date(m.lastLogin).toLocaleString() : "Never"}
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" class="btn-primary btn-sm" onclick="openMemberDetailView('${m.memberId}', '${m.fullName.replace(/'/g, "\\'")}', '${m.role}')">Profile & History</button>
+                    <button type="button" class="btn-outline btn-sm" onclick="openEditMemberProfileModal('${m.memberId}')">Edit / Status / Reset</button>
+                    <button type="button" class="btn-danger btn-sm" onclick="removeMemberAccount('${m.memberId}', '${m.fullName.replace(/'/g, "\\'")}')">Delete</button>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminApplicationsPanel(apps) {
+      return `
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Applications & Tracking IDs (${apps.length})</h2>
+            <button type="button" class="btn-primary btn-sm" onclick="document.getElementById('createAppModal').style.display='flex'">+ New Application</button>
+          </div>
+          <form id="quickCreateAppInline" style="display: none;"></form>
+          <div class="record-stream">
+            ${apps.length === 0
+              ? `<p style="color: var(--text-dim); font-size: 0.88rem;">No applications logged yet.</p>`
+              : apps.map(a => {
+                  const badgeCls = a.status === "Approved" ? "badge-completed" : (a.status === "Rejected" ? "badge-inactive" : "badge-pending");
+                  return `
+                    <div class="record-ticket ${a.status === "Approved" ? "status-done" : "status-wait"}">
+                      <div class="ticket-header">
+                        <span class="badge badge-progress">Tracking ID: ${a.trackingId}</span>
+                        <span class="badge ${badgeCls}">${a.status}</span>
+                      </div>
+                      <div class="ticket-body">
+                        <div><strong>Applicant:</strong> ${a.applicantName}</div>
+                        <div><strong>Position Applied:</strong> ${a.positionApplied}</div>
+                        <div><strong>Contact:</strong> ${a.contactInfo}</div>
+                        ${a.notes ? `<div><strong>Notes:</strong> ${a.notes}</div>` : ""}
+                      </div>
+                      <div class="ticket-footer">
+                        <span style="font-size: 0.74rem; color: var(--text-dim);">${new Date(a.submittedAt).toLocaleString()}</span>
+                        <div style="display: flex; gap: 6px;">
+                          <button type="button" class="btn-primary btn-sm" onclick="updateAppStatus('${a.trackingId}', 'Approved')">Approve</button>
+                          <button type="button" class="btn-danger btn-sm" onclick="updateAppStatus('${a.trackingId}', 'Rejected')">Reject</button>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join("")
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminSettingsPanel() {
+      const s = dashboardCache.settings || {};
+      return `
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Portal Access, Maintenance & Content Settings</h2>
+          </div>
+          <form id="adminSettingsForm">
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="setMaintenanceMode">Website Maintenance Mode</label>
+                <select id="setMaintenanceMode">
+                  <option value="false" ${!s.maintenanceMode ? "selected" : ""}>OFF (Normal)</option>
+                  <option value="true" ${s.maintenanceMode ? "selected" : ""}>ON (Maintenance Lock)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="setPortalLocked">Portal Lockdown</label>
+                <select id="setPortalLocked">
+                  <option value="false" ${!s.locked ? "selected" : ""}>OFF (Unlocked)</option>
+                  <option value="true" ${s.locked ? "selected" : ""}>ON (Locked)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="setLoginEnabled">Member Login System</label>
+                <select id="setLoginEnabled">
+                  <option value="true" ${s.loginEnabled !== false ? "selected" : ""}>ON (Enabled)</option>
+                  <option value="false" ${s.loginEnabled === false ? "selected" : ""}>OFF (Disabled)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="setRegEnabled">New User Registration Control</label>
+                <select id="setRegEnabled">
+                  <option value="true" ${s.registrationEnabled !== false ? "selected" : ""}>ON (Allowed)</option>
+                  <option value="false" ${s.registrationEnabled === false ? "selected" : ""}>OFF (Blocked)</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group"><label for="setBrandName">Portal / Organization Name</label><input id="setBrandName" type="text" value="${(s.brandName || "NGI Leader's Portal").replace(/"/g, "&quot;")}" /><button type="button" class="btn-primary btn-sm" id="ngxSaveName" style="margin-top:8px">Submit Portal Name</button></div>
+              <div class="form-group"><label for="setBrandLogo">Update NGI Logo (PNG/JPG/WebP)</label><input id="setBrandLogo" type="file" accept="image/png,image/jpeg,image/webp" /><small style="color:var(--text-dim)">Logo will replace the current portal logo.</small><button type="button" class="btn-primary btn-sm" id="ngxSaveLogo" style="margin-top:8px">Submit Logo</button></div>
+            </div>
+            <div class="form-group">
+              <label for="setHomeBanner">Home Announcement Banner Text (Website Content)</label>
+              <input id="setHomeBanner" type="text" value="${(s.homeBannerText || "").replace(/"/g, "&quot;")}" placeholder="Write scrolling announcement..." />
+              <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                <button type="button" class="btn-primary btn-sm" id="saveTickerBtn">Update Scrolling Ticker</button>
+                <button type="button" class="btn-outline btn-sm" id="clearTickerBtn">Delete Ticker</button>
+                <small style="color:var(--text-dim);align-self:center;">Text badal kar Update dabayein. Delete se ticker foran remove hoga.</small>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary">Save Settings</button>
+          </form>
+        </div>
+      `;
+    }
+
+    async function readCompressedBrandLogo(file) {
+      if (!file) return "";
+      if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) throw new Error("Choose an image up to 10 MB.");
+      const dataUrl = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file); });
+      const img = await new Promise((resolve,reject)=>{ const i=new Image(); i.onload=()=>resolve(i); i.onerror=reject; i.src=dataUrl; });
+      const canvas=document.createElement("canvas"); canvas.width=512; canvas.height=512;
+      const ctx=canvas.getContext("2d"); const scale=Math.max(512/img.width,512/img.height); const w=img.width*scale,h=img.height*scale;
+      ctx.drawImage(img,(512-w)/2,(512-h)/2,w,h);
+      return canvas.toDataURL("image/jpeg",0.88);
+    }
+
+    function applyBranding(settings) {
+      if (!settings) return;
+      const logo = settings.brandLogoUrl || NGI_LOGO_URL;
+      document.querySelectorAll('img[src*="icons/app-icon-"]').forEach(img => { img.src = logo; });
+      if (settings.brandName) document.querySelectorAll('.sidebar-brand span,.splash-name').forEach(el => el.textContent=settings.brandName);
+      document.title = settings.brandName || "NGI Leader's & Admin Portal";
+    }
+
+    function bindAdminSettingsForm() {
+      const form = document.getElementById("adminSettingsForm");
+      if (!form) return;
+      ngxBindBrand();
+      const saveTickerBtn = document.getElementById("saveTickerBtn");
+      const clearTickerBtn = document.getElementById("clearTickerBtn");
+      const updateTicker = async (text) => {
+        const res = await callApi({ action: "updateTicker", actorRole: "ADMIN", actorId: sessionUser.memberId, homeBannerText: text }, text ? "Updating Scrolling Ticker..." : "Deleting Scrolling Ticker...");
+        if (res.success) { document.getElementById("setHomeBanner").value = text; await loadAndRender(); activeNav = "admin_settings"; renderAdminDashboard(); alert(res.message || "Ticker updated."); }
+        else alert(res.message || "Ticker update failed.");
+      };
+      if (saveTickerBtn) saveTickerBtn.addEventListener("click", () => updateTicker(document.getElementById("setHomeBanner").value.trim()));
+      if (clearTickerBtn) clearTickerBtn.addEventListener("click", () => { if (confirm("Are you sure you want to delete the scrolling ticker?")) updateTicker(""); });
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const res = await callApi({
+          action: "updatePortalSettings",
+          actorRole: "ADMIN",
+          actorId: sessionUser.memberId,
+          maintenanceMode: document.getElementById("setMaintenanceMode").value === "true",
+          locked: document.getElementById("setPortalLocked").value === "true",
+          loginEnabled: document.getElementById("setLoginEnabled").value === "true",
+          registrationEnabled: document.getElementById("setRegEnabled").value === "true",
+          homeBannerText: document.getElementById("setHomeBanner").value,
+          brandName: document.getElementById("setBrandName").value,
+          brandLogoDataUrl: await readCompressedBrandLogo(document.getElementById("setBrandLogo").files[0])
+        }, "Saving System Settings...");
+        if (res.success) {
+          alert(res.message);
+          await loadAndRender();
+        }
+      });
+    }
+
+    function bindAdminAppForm() {
+      const form = document.getElementById("createAppForm");
+      if (!form || form.dataset.bound) return;
+      form.dataset.bound = "true";
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const res = await callApi({
+          action: "saveApplication",
+          actorRole: "ADMIN",
+          actorId: sessionUser.memberId,
+          applicantName: document.getElementById("appApplicantName").value,
+          positionApplied: document.getElementById("appPosition").value,
+          contactInfo: document.getElementById("appContact").value,
+          notes: document.getElementById("appNotes").value
+        }, "Generating Tracking ID...");
+        if (res.success) {
+          closeModal("createAppModal");
+          form.reset();
+          alert(res.message);
+          await loadAndRender();
+        }
+      });
+    }
+
+    async function updateAppStatus(trackingId, status) {
+      const res = await callApi({
+        action: "updateApplicationStatus",
+        actorRole: "ADMIN",
+        actorId: sessionUser.memberId,
+        trackingId,
+        status
+      }, "Updating Application...");
+      if (res.success) await loadAndRender();
+    }
+
+    function openCreateMemberModal() {
+      document.getElementById("createMemberForm").reset();
+      generateRandomMemberId("newMemId");
+      document.getElementById("createMemberModal").style.display = "flex";
+    }
+
+    document.getElementById("createMemberForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const res = await callApi({
+        action: "adminCreateMember",
+        actorRole: "ADMIN",
+        actorId: sessionUser.memberId,
+        fullName: document.getElementById("newMemFullName").value,
+        position: document.getElementById("newMemPosition").value,
+        schemaRole: document.getElementById("newMemSchemaRole").value,
+        memberId: document.getElementById("newMemId").value,
+        password: document.getElementById("newMemPass").value,
+        email: document.getElementById("newMemEmail").value,
+        avatarUrl: document.getElementById("newMemAvatar").value
+      }, "Creating User Account...");
+
+      if (res.success) {
+        closeModal("createMemberModal");
+        alert(res.message);
+        await loadAndRender();
+      } else {
+        alert("Error: " + res.message);
+      }
+    });
+
+    function openEditMemberProfileModal(memberId) {
+      const member = (dashboardCache.members || []).find(m => String(m.memberId).toLowerCase() === String(memberId).toLowerCase());
+      if (!member) return;
+
+      document.getElementById("editOrigMemberId").value = member.memberId;
+      document.getElementById("editFullName").value = member.fullName;
+      document.getElementById("editPosition").value = member.position;
+      document.getElementById("editSchemaRole").value = member.role;
+      document.getElementById("editNewMemberId").value = member.memberId;
+      document.getElementById("editMemberStatus").value = member.status || "Active";
+      document.getElementById("editMemberEmail").value = member.email || "";
+      document.getElementById("editAvatarUrl").value = member.avatar || "";
+      document.getElementById("editNewPassword").value = "";
+      document.getElementById("editMemberProfileModal").style.display = "flex";
+    }
+
+    async function removeMemberAccount(targetId, fullName) {
+      if (!confirm(`Delete user account ${fullName} (${targetId})?`)) return;
+      const res = await callApi({
+        action: "adminDeleteMember",
+        actorRole: "ADMIN",
+        actorId: sessionUser.memberId,
+        targetMemberId: targetId
+      }, "Deleting User...");
+      if (res.success) {
+        alert(res.message);
+        await loadAndRender();
+      } else {
+        alert("Error: " + res.message);
+      }
+    }
+
+    function openMemberDetailView(targetMemberId, fullName, role) {
+      const schema = getRoleSchema(role);
+      const memberObj = (dashboardCache.members || []).find(m => String(m.memberId).toLowerCase() === String(targetMemberId).toLowerCase()) || {};
+      const userLogs = (dashboardCache.activityFeed || []).filter(f => String(f.memberId).toLowerCase() === String(targetMemberId).toLowerCase());
+
+      const memberRecords = [];
+      Object.entries(schema.sections).forEach(([secKey, secDef]) => {
+        const rows = dashboardCache.records[secKey] || [];
+        rows.forEach(r => {
+          if (String(r.MemberID).toLowerCase() === String(targetMemberId).toLowerCase()) {
+            memberRecords.push({ ...r, _sectionLabel: secDef.label, _fields: secDef.fields });
+          }
+        });
+      });
+
+      document.getElementById("memberDetailTitle").textContent = `${fullName} (${targetMemberId})`;
+      document.getElementById("memberDetailBody").innerHTML = `
+        <div class="panel" style="background: #0B1126; margin-bottom: 14px;">
+          <div><strong>Position:</strong> ${memberObj.position || role}</div>
+          <div><strong>Status:</strong> ${memberObj.status || "Active"}</div>
+          <div><strong>Email:</strong> ${memberObj.email || "Not set"}</div>
+          <div><strong>Last Login:</strong> ${memberObj.lastLogin ? new Date(memberObj.lastLogin).toLocaleString() : "Never"}</div>
+        </div>
+        <h3 style="margin-bottom: 10px;">Activity & Login History (${userLogs.length})</h3>
+        <div class="record-stream" style="margin-bottom: 16px;">
+          ${userLogs.length === 0
+            ? `<p style="color: var(--text-dim); font-size: 0.85rem;">No recent activity logs.</p>`
+            : userLogs.map(l => `<div class="feed-item"><strong>${l.action}</strong> (${l.section}) — ${l.summary} <div style="font-size: 0.72rem; color: var(--text-dim);">${new Date(l.timestamp).toLocaleString()}</div></div>`).join("")
+          }
+        </div>
+        <h3 style="margin-bottom: 10px;">Submitted Records (${memberRecords.length})</h3>
+        <div class="record-stream">
+          ${memberRecords.length === 0
+            ? `<p style="color: var(--text-dim); font-size: 0.85rem;">No records submitted yet.</p>`
+            : memberRecords.map(rec => `
+              <div class="record-ticket status-done">
+                <div class="ticket-header"><span class="badge badge-progress">${rec._sectionLabel}</span></div>
+                <div class="ticket-body">
+                  ${rec._fields.map(f => rec[f.name] ? `<div><strong>${f.label}:</strong> ${rec[f.name]}</div>` : "").join("")}
+                </div>
+              </div>
+            `).join("")
+          }
+        </div>
+      `;
+      document.getElementById("memberDetailModal").style.display = "flex";
+    }
+
+    function openPublishNoticeModal() {
+      document.getElementById("publishNoticeForm").reset();
+      document.getElementById("publishNoticeModal").style.display = "flex";
+    }
+
+    document.getElementById("publishNoticeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const res = await callApi({
+        action: "saveNotice",
+        actorRole: "ADMIN",
+        actorId: sessionUser.memberId,
+        title: document.getElementById("noticeTitleInput").value,
+        priority: document.getElementById("noticePrioritySelect").value,
+        content: document.getElementById("noticeContentInput").value,
+        sendEmail: document.getElementById("noticeSendEmailCheckbox").checked
+      }, "Publishing Announcement...");
+      if (res.success) {
+        closeModal("publishNoticeModal");
+        alert(res.message);
+        await loadAndRender();
+      } else {
+        alert("Error: " + res.message);
+      }
+    });
+
+    async function deleteNoticeItem(noticeId) {
+      if (!confirm("Remove this announcement?")) return;
+      const res = await callApi({ action: "deleteNotice", actorRole: "ADMIN", noticeId }, "Removing...");
+      if (res.success) await loadAndRender();
+    }
+
+    async function editNoticeItem(noticeId) {
+      const notice = (dashboardCache.notices || []).find(n => String(n.noticeId) === String(noticeId));
+      if (!notice) return alert("Announcement not found.");
+      const title = prompt("Edit announcement title:", notice.title || ""); if (title === null) return;
+      const content = prompt("Edit announcement text:", notice.content || ""); if (content === null) return;
+      const priority = prompt("Priority (Normal / Urgent):", notice.priority || "Normal"); if (priority === null) return;
+      const res = await callApi({ action: "updateNotice", actorRole: "ADMIN", noticeId, title, content, priority }, "Updating announcement...");
+      if (res.success) await loadAndRender(); else alert(res.message || "Could not update announcement.");
+    }
+
+    function openReplyNoteModal(noteId, subject) {
+      document.getElementById("replyTargetNoteId").value = noteId;
+      document.getElementById("replyNotePreview").textContent = `Replying to: "${subject}"`;
+      document.getElementById("replyNoteInput").value = "";
+      document.getElementById("replyNoteModal").style.display = "flex";
+    }
+
+    document.getElementById("replyNoteForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const res = await callApi({
+        action: "replyDirectNote",
+        actorRole: "ADMIN",
+        noteId: document.getElementById("replyTargetNoteId").value,
+        replyText: document.getElementById("replyNoteInput").value
+      }, "Sending Reply...");
+      if (res.success) {
+        closeModal("replyNoteModal");
+        await loadAndRender();
+      }
+    });
+
+    function openUpdateComplaintModal(complaintId, status, assignedTo, feedback) {
+      document.getElementById("updCompId").value = complaintId;
+      document.getElementById("updCompStatus").value = status;
+      document.getElementById("updCompAssigned").value = assignedTo;
+      document.getElementById("updCompFeedback").value = feedback;
+      document.getElementById("updateComplaintModal").style.display = "flex";
+    }
+
+    document.getElementById("updateComplaintForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const res = await callApi({
+        action: "updateComplaint",
+        actorRole: "ADMIN",
+        actorId: sessionUser.memberId,
+        complaintId: document.getElementById("updCompId").value,
+        status: document.getElementById("updCompStatus").value,
+        assignedTo: document.getElementById("updCompAssigned").value,
+        feedback: document.getElementById("updCompFeedback").value
+      }, "Updating Complaint...");
+      if (res.success) {
+        closeModal("updateComplaintModal");
+        await loadAndRender();
+      }
+    });
+
+    function renderActivityFeedHtml(feed) {
+      if (!feed || feed.length === 0) return `<p style="color: var(--text-dim);">No activity logs recorded yet.</p>`;
+      return `<ul class="feed-list">
+        ${feed.map(item => `
+          <li class="feed-item">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <strong style="color: var(--text-main); font-size: 0.9rem;">${item.memberName} (${item.position})</strong>
+              <span class="badge badge-progress">${item.section}</span>
+            </div>
+            <div style="font-size: 0.84rem; color: var(--text-dim); margin-top: 4px;">${item.action}: <strong style="color: #93C5FD;">${item.summary}</strong></div>
+            <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px;">${new Date(item.timestamp).toLocaleString()}</div>
+          </li>
+        `).join("")}
+      </ul>`;
+    }
+
+    function renderAdminAttendancePanel() {
+      const rows = dashboardCache.attendance || [];
+      const members = (dashboardCache.members || []).filter(m => m.role !== "ADMIN");
+      const summaries = members.map(m => {
+        const mine = rows.filter(a => String(a.memberId || a.MemberID || "").toLowerCase() === String(m.memberId || "").toLowerCase());
+        const c = { present: 0, absent: 0, late: 0, onDuty: 0 };
+        mine.forEach(a => { const st=String(a.status||"Present").toLowerCase(); if(st==="present")c.present++; else if(st==="absent"||st==="absence")c.absent++; else if(st==="late")c.late++; else if(st==="on duty"||st==="onduty")c.onDuty++; });
+        const total=mine.length, rate=total?Math.round((c.present+c.late+c.onDuty)/total*100):0;
+        return { member:m, counts:c, total, rate };
+      }).sort((a,b)=>String(a.member.fullName||"").localeCompare(String(b.member.fullName||"")));
+      return `
+        <div class="panel">
+          <div class="panel-header"><h2>Attendance Overview — All Members</h2><span class="badge badge-progress">${rows.length} Total Records</span></div>
+          ${summaries.length ? `<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Member</th><th>Attendance %</th><th>Total</th><th>Present</th><th>Absent</th><th>Late</th><th>On Duty</th></tr></thead><tbody>${summaries.map(x => `<tr><td><div style="display:flex;align-items:center;gap:9px"><img class="avatar" style="width:36px;height:36px" src="${x.member.avatar || getRoleSchema(x.member.role).defaultAvatar}" alt=""><div><strong>${x.member.fullName}</strong><br><small>${x.member.memberId} · ${x.member.position || ""}</small></div></div></td><td><strong style="color:var(--emerald-glow)">${x.rate}%</strong><div style="height:5px;width:90px;background:var(--surface-elevated);border-radius:20px;overflow:hidden;margin-top:5px"><div style="height:100%;width:${x.rate}%;background:var(--emerald-glow)"></div></div></td><td>${x.total}</td><td>${x.counts.present}</td><td>${x.counts.absent}</td><td>${x.counts.late}</td><td>${x.counts.onDuty}</td></tr>`).join("")}</tbody></table></div>` : `<p style="color:var(--text-dim)">No registered members found.</p>`}
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2>All Attendance Entries</h2><button class="btn-outline btn-sm" type="button" onclick="exportAttendanceCsv()">Export Attendance CSV</button></div>
+          ${rows.length ? `<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Member</th><th>Position</th><th>Date</th><th>Time</th><th>Status</th><th>Location</th><th>Notes</th></tr></thead><tbody>${rows.map(a => `<tr><td>${a.memberName || a.memberId || "—"}<br><small>${a.memberId || ""}</small></td><td>${a.position || "—"}</td><td>${a.date || "—"}</td><td>${a.time || "—"}</td><td>${a.status || "Present"}</td><td>${a.location || "—"}</td><td>${a.notes || "—"}</td></tr>`).join("")}</tbody></table></div>` : `<p style="color:var(--text-dim)">No attendance entries yet.</p>`}
+        </div>`;
+    }
+
+    function exportAttendanceCsv() {
+      const rows = dashboardCache.attendance || [];
+      const headers = ["Member ID","Member Name","Position","Date","Time","Status","Location","Notes"];
+      const esc = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const lines = [headers, ...rows.map(a => [a.memberId,a.memberName,a.position,a.date,a.time,a.status,a.location,a.notes])].map(r => r.map(esc).join(","));
+      const blob = new Blob(["\ufeff" + lines.join("\r\n")], {type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href=url; link.download="NGI_Attendance.csv"; link.click(); URL.revokeObjectURL(url);
+    }
+
+    function renderMemberAttendanceSummaryPanel() {
+      const rows = dashboardCache.attendance || [];
+      const count = { present: 0, absent: 0, late: 0, onDuty: 0 };
+      rows.forEach(a => {
+        const st = String(a.status || "Present").toLowerCase();
+        if (st === "present") count.present++;
+        else if (st === "absent") count.absent++;
+        else if (st === "late") count.late++;
+        else if (st === "on duty" || st === "onduty") count.onDuty++;
+      });
+      const total = rows.length;
+      const attended = count.present + count.late + count.onDuty;
+      const pct = total ? Math.round(attended / total * 100) : 0;
+      return `
+        <div class="panel">
+          <div class="panel-header"><h2>My Attendance</h2><button type="button" class="btn-primary btn-sm" onclick="activeNav='attendance';renderMemberDashboard();">Mark / View Attendance</button></div>
+          <div class="stats-grid">
+            <div class="stat-card"><h3>Attendance Rate</h3><div class="val" style="color:var(--emerald-glow)">${pct}%</div></div>
+            <div class="stat-card"><h3>Total Entries</h3><div class="val">${total}</div></div>
+            <div class="stat-card"><h3>Present</h3><div class="val">${count.present}</div></div>
+            <div class="stat-card"><h3>Late</h3><div class="val">${count.late}</div></div>
+            <div class="stat-card"><h3>On Duty</h3><div class="val">${count.onDuty}</div></div>
+            <div class="stat-card"><h3>Absent</h3><div class="val" style="color:var(--danger-red)">${count.absent}</div></div>
+          </div>
+          <div style="height:9px;background:var(--surface-card);border-radius:99px;overflow:hidden;margin-top:12px"><div style="height:100%;width:${pct}%;background:var(--emerald-glow);border-radius:99px"></div></div>
+          <small style="display:block;color:var(--text-dim);margin-top:7px">Attendance rate = Present + Late + On Duty / Total recorded entries</small>
+        </div>`;
+    }
+
+    function renderMemberAttendanceHtml() {
+      const rows = dashboardCache.attendance || [];
+      const today = new Date();
+      const dateValue = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      return `
+        <div class="panel">
+          <div class="panel-header"><h2>Mark Attendance</h2></div>
+          <form id="memberAttendanceForm" class="form-grid">
+            
+            <div class="form-group"><label for="attStatus">Status</label><select id="attStatus"><option>Present</option><option>Late</option><option>Leave</option><option>Absence</option></select></div>
+            <div class="form-group"><label for="attLocation">Location</label><input id="attLocation" type="text" placeholder="Office / Field / Event"></div>
+            <div class="form-group" style="grid-column:1/-1"><label for="attNotes">Notes (required for Late and Leave)</label><textarea id="attNotes" placeholder="Reason for late arrival, leave application or explanation"></textarea></div>
+            <div class="form-group" style="grid-column:1/-1"><button class="btn-primary" type="submit">Submit Attendance</button></div>
+          </form>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2>My Attendance History</h2><span class="badge badge-progress">${rows.length} Entries</span></div>
+          ${rows.length ? `<div class="record-stream">${rows.map(a => `
+            <div class="record-ticket ${String(a.status).toLowerCase()==="present" ? "status-done" : "status-wait"}">
+              <div class="ticket-header"><strong>${a.date || "—"} · ${a.time || ""}</strong><span class="badge ${String(a.status).toLowerCase()==="present" ? "badge-completed" : "badge-pending"}">${a.status || "Recorded"}</span></div>
+              <div class="ticket-body"><div><strong>Location:</strong> ${a.location || "—"}</div>${a.notes ? `<div><strong>Notes:</strong> ${a.notes}</div>` : ""}</div>
+            </div>`).join("")}</div>` : `<p style="color:var(--text-dim)">Abhi attendance record mojood nahi. Upar form se attendance submit karein.</p>`}
+        </div>`;
+    }
+
+    function bindMemberAttendanceForm() {
+      const form = document.getElementById("memberAttendanceForm");
+      if (!form) return;
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const res = await callApi({
+          action: "markAttendance",
+          memberId: sessionUser.memberId,
+          memberName: sessionUser.fullName,
+          position: sessionUser.position,
+          date: "",
+          time: "",
+          status: document.getElementById("attStatus").value,
+          location: document.getElementById("attLocation").value,
+          notes: document.getElementById("attNotes").value
+        }, "Submitting Attendance...");
+        if (res.success) {
+          await loadAndRender();
+          activeNav = "attendance";
+          renderMemberDashboard();
+          alert("Attendance submitted successfully.");
+        } else alert(res.message || "Attendance could not be submitted.");
+      });
+    }
+
+    function renderMemberRecentHtml(records, schema) {
+      if (!records || records.length === 0) return `<p style="color: var(--text-dim);">No recent activities yet. Click "+ Add Record" above.</p>`;
+      return `<div class="record-stream">${[...records].reverse().map(rec => {
+        const firstField = schema.sections[rec._sectionKey]?.fields?.[0]?.name;
+        const createdMs = new Date(rec.CreatedAt || 0).getTime();
+        const canEdit = rec._isOfflinePending || (createdMs > 0 && Date.now() >= createdMs && Date.now() - createdMs <= 10 * 60 * 1000);
+        return `<div class="record-ticket"><div class="ticket-header"><strong>${rec[firstField] || rec.RecordID}</strong><span class="badge badge-progress">${rec._sectionLabel}</span></div><div class="ticket-footer"><span style="font-size:.74rem;color:var(--text-dim)">Submitted: ${createdMs ? new Date(createdMs).toLocaleString() : "Date unavailable"}</span>${canEdit ? `<button type="button" class="btn-outline btn-sm" onclick="openRecordModal('${rec.RecordID}', '${rec._sectionKey}')">Edit (10 min)</button>` : `<span class="badge badge-inactive">Edit closed</span>`}</div></div>`;
+      }).join("")}</div>`;
+    }
+
+    document.getElementById("topAddRecordBtn").addEventListener("click", () => {
+      const preset = !["overview", "direct_notes", "complaints"].includes(activeNav) ? activeNav : "";
+      openRecordModal(null, preset);
+    });
+    document.getElementById("closeRecordModal").addEventListener("click", () => closeModal("recordModal"));
+    document.getElementById("cancelRecordModal").addEventListener("click", () => closeModal("recordModal"));
+
+    function openRecordModal(recordId = null, sectionKey = "") {
+      const schema = getRoleSchema(sessionUser.role);
+      const secSelect = document.getElementById("recSectionSelect");
+      secSelect.innerHTML = Object.entries(schema.sections)
+        .map(([k, s]) => `<option value="${k}">${s.label}</option>`)
+        .join("");
+
+      const chosenSection = sectionKey || Object.keys(schema.sections)[0];
+      secSelect.value = chosenSection;
+      secSelect.disabled = Boolean(recordId);
+
+      let existingRecord = null;
+      if (recordId) {
+        const offlineItem = pendingQueueCache.find(p => p.recordId === recordId);
+        if (offlineItem) existingRecord = { ...offlineItem.fields, RecordID: offlineItem.recordId };
+        else existingRecord = (dashboardCache.records[chosenSection] || []).find(r => r.RecordID === recordId);
+      }
+
+      document.getElementById("modalTitle").textContent = existingRecord ? "Edit Record" : "Add New Record";
+      document.getElementById("editRecordId").value = existingRecord ? existingRecord.RecordID : "";
+
+      renderDynamicFields(schema, chosenSection, existingRecord || {});
+      secSelect.onchange = () => renderDynamicFields(schema, secSelect.value, {});
+
+      document.getElementById("recordModal").style.display = "flex";
+    }
+
+    function renderDynamicFields(schema, sectionKey, recordObj) {
+      const sec = schema.sections[sectionKey];
+      const container = document.getElementById("sectionFieldsContainer");
+      container.innerHTML = sec.fields.map((f) => {
+        let val = recordObj[f.name] || "";
+        if (f.type === "date" && val && val.includes("T")) val = val.split("T")[0];
+        const req = f.required ? "required" : "";
+
+        if (f.type === "select") {
+          return `
+            <div class="form-group">
+              <label for="f_${f.name}">${f.label}</label>
+              <select id="f_${f.name}" ${req}>
+                ${f.options.map(opt => `<option value="${opt}" ${val === opt ? "selected" : ""}>${opt}</option>`).join("")}
+              </select>
+            </div>`;
+        }
+        if (f.type === "textarea") {
+          return `
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label for="f_${f.name}">${f.label}</label>
+              <textarea id="f_${f.name}" ${req}>${val}</textarea>
+            </div>`;
+        }
+        if (f.type === "file") {
+          return `
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label for="f_${f.name}">${f.label}</label>
+              <input id="f_${f.name}" type="file" accept="image/*" ${req} />
+              <small style="color:var(--text-dim);display:block;margin-top:6px;">Upload one clear photo (JPG, PNG or WEBP; max 5 MB).</small>
+              ${val && /^https?:\/\//i.test(String(val)) ? `<a href="${val}" target="_blank" rel="noopener" style="color:#60A5FA;">View previously uploaded photo</a>` : ""}
+            </div>`;
+        }
+        return `
+          <div class="form-group">
+            <label for="f_${f.name}">${f.label}</label>
+            <input id="f_${f.name}" type="${f.type}" value="${val}" placeholder="${f.type === "url" ? "https://youtube.com/..." : ""}" ${req} />
+          </div>`;
+      }).join("");
+    }
+
+    document.getElementById("recordForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const schema = getRoleSchema(sessionUser.role);
+      const section = document.getElementById("recSectionSelect").value;
+      const incomingEditId = document.getElementById("editRecordId").value;
+
+      const fields = {};
+      for (const f of schema.sections[section].fields) {
+        const el = document.getElementById(`f_${f.name}`);
+        if (f.type === "file") {
+          const file = el.files && el.files[0];
+          if (file) {
+            if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+              alert("Please select an image up to 5 MB."); return;
+            }
+            fields[f.name] = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(String(reader.result));
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+          } else {
+            const existing = incomingEditId
+              ? (pendingQueueCache.find(p => p.recordId === incomingEditId)?.fields?.[f.name] ||
+                 (dashboardCache.records[section] || []).find(r => r.RecordID === incomingEditId)?.[f.name] || "")
+              : "";
+            fields[f.name] = existing;
+          }
+        } else fields[f.name] = el.value;
+      }
+
+      const nowIso = new Date().toISOString();
+      const isExistingOfflineItem = incomingEditId && incomingEditId.startsWith("OFFLINE-");
+      const isOnlineServerEdit = incomingEditId && !isExistingOfflineItem;
+
+      if (navigator.onLine && !isExistingOfflineItem) {
+        const res = await callApi({
+          action: incomingEditId ? "updateOwnRecord" : "saveRecord",
+          memberId: sessionUser.memberId,
+          role: sessionUser.role,
+          section,
+          recordId: incomingEditId || null,
+          fields
+        }, "Saving Record...", true);
+
+        if (res.success) {
+          closeModal("recordModal");
+          await loadAndRender();
+          return;
+        } else if (!res.offline) {
+          alert("Failed to save record: " + res.message);
+          return;
+        }
+      }
+
+      const offlineRecordId = incomingEditId || `OFFLINE-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const existingQueueEntry = pendingQueueCache.find(p => p.recordId === offlineRecordId);
+
+      await idbPutOfflineRecord({
+        recordId: offlineRecordId,
+        isOfflineNew: !isOnlineServerEdit,
+        memberId: sessionUser.memberId,
+        section,
+        fields,
+        createdAt: existingQueueEntry ? existingQueueEntry.createdAt : nowIso,
+        updatedAt: nowIso
+      });
+
+      closeModal("recordModal");
+      await refreshPendingCache();
+      renderMemberDashboard();
+      alert("Saved Offline! Entry will sync automatically once internet returns.");
+    });
+
+    async function deleteRecord(recordId, section, isOfflinePending = false) {
+      if (!confirm("Permanently remove this record?")) return;
+      if (isOfflinePending || String(recordId).startsWith("OFFLINE-")) {
+        await idbDeletePendingRecord(recordId);
+        await refreshPendingCache();
+        renderMemberDashboard();
+        return;
+      }
+      if (!navigator.onLine) return alert("Connect to the internet to delete synced records.");
+      const res = await callApi({ action: "deleteRecord", memberId: sessionUser.memberId, section, recordId }, "Deleting Record...");
+      if (res.success) await loadAndRender();
+    }
+
+    function exportAllCsv() {
+      const rows = [["Section", "RecordID", "MemberID", "Details", "CreatedAt", "UpdatedAt"].join(",")];
+      Object.entries(dashboardCache.records || {}).forEach(([sec, list]) => {
+        list.forEach(r => {
+          const details = JSON.stringify(r).replace(/"/g, '""');
+          rows.push([sec, r.RecordID, r.MemberID, `"${details}"`, r.CreatedAt || "", r.UpdatedAt || ""].join(","));
+        });
+      });
+      const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `NGI-Report-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+    }
+
+    if (sessionUser) {
+      loadAndRender();
+    } else {
+      renderBoot();
+    }
+
+    /* ================= NGI v2 additions ================= */
+    const NGX_DEV_KEY = "ngi_admin_device_token";
+    const ngxById = (id) => document.getElementById(id);
+    const ngxEsc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const ngxFmt = (iso) => { try { return new Date(iso).toLocaleString("en-PK", { timeZone: "Asia/Karachi", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }); } catch (e) { return iso || ""; } };
+    async function ngxApi(payload) {
+      try {
+        const r = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+        return await r.json();
+      } catch (e) { return { success: false, offline: true, message: "Network error. Check your connection." }; }
+    }
+    function ngxDeviceName() { const u = navigator.userAgent || ""; return (/Android/i.test(u) ? "Android" : /iPhone|iPad/i.test(u) ? "iOS" : "Desktop") + " device"; }
+
+    /* ---- Admin sign-in: email OTP (first master), trusted device token, pairing code ---- */
+    async function ngxInitAdminIcon() {
+      const w = ngxById("adminIconWrap"); if (!w) return;
+      const t = localStorage.getItem(NGX_DEV_KEY) || "";
+      if (t) w.style.display = "flex";
+      const r = await ngxApi({ action: "adminDeviceStatus", deviceToken: t });
+      if (!r.success) return;
+      if (t && !r.authorized) localStorage.removeItem(NGX_DEV_KEY);
+      w.style.display = (r.authorized || !r.masterExists) ? "flex" : "none";
+    }
+    function ngxAdminErr(m) { const e = ngxById("adminAuthError"); e.textContent = m; e.style.display = m ? "block" : "none"; }
+    function ngxAdminSession(res) {
+      closeModal("adminAuthModal");
+      saveTabSession({ memberId: "NGI-ADMIN", fullName: "NGI System Admin", position: "Full System Administrator", role: "ADMIN", avatar: "", token: res.token, isMaster: !!res.isMaster });
+      activeNav = "admin_overview";
+      loadAndRender();
+    }
+    function ngxOpenAdmin(mode) {
+      const b = ngxById("adminAuthBody"); ngxAdminErr("");
+      const hasDev = !!localStorage.getItem(NGX_DEV_KEY);
+      mode = mode || (hasDev ? "device" : "otp");
+      const btn = (id, t) => `<button type="button" class="btn-primary" style="width:100%;margin-top:10px" id="${id}">${t}</button>`;
+      if (mode === "device") {
+        b.innerHTML = `<p style="color:var(--text-dim);font-size:.88rem">This device is authorized for administrator access.</p>${btn("axGo", "Access Admin Panel")}`;
+        ngxById("axGo").onclick = async () => {
+          const r = await callApi({ action: "adminDeviceLogin", deviceToken: localStorage.getItem(NGX_DEV_KEY) }, "Verifying device...");
+          if (r.success) return ngxAdminSession(r);
+          if (r.revoked) { localStorage.removeItem(NGX_DEV_KEY); ngxById("adminIconWrap").style.display = "none"; }
+          ngxAdminErr(r.message || "Sign-in failed.");
+        };
+      } else if (mode === "otp") {
+        b.innerHTML = `<p style="color:var(--text-dim);font-size:.88rem">A one-time code will be sent to the authorized NGI email. The first verified device becomes the Master Device.</p>${btn("axSend", "Send Verification Code")}
+          <div id="axOtpBox" style="display:none"><div class="form-group" style="margin-top:12px"><label for="axOtp">Verification Code</label><input id="axOtp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" /></div>${btn("axVerify", "Verify and Continue")}</div>`;
+        ngxById("axSend").onclick = async () => {
+          const r = await callApi({ action: "requestMasterOtp" }, "Sending code...");
+          if (r.success) { ngxById("axOtpBox").style.display = "block"; ngxAdminErr(""); } else ngxAdminErr(r.message || "Could not send the code.");
+        };
+        ngxById("axVerify").onclick = async () => {
+          const r = await callApi({ action: "verifyMasterOtp", otp: ngxById("axOtp").value, deviceName: ngxDeviceName(), deviceType: "web" }, "Verifying...");
+          if (r.success) { localStorage.setItem(NGX_DEV_KEY, r.deviceToken); return ngxAdminSession(r); }
+          ngxAdminErr(r.message || "Verification failed.");
+        };
+      } else {
+        b.innerHTML = `<p style="color:var(--text-dim);font-size:.88rem">Enter the authorization code shown on the Master Device.</p><div class="form-group"><label for="axCode">Authorization Code</label><input id="axCode" maxlength="8" autocapitalize="characters" /></div>${btn("axPair", "Authorize This Device")}`;
+        ngxById("axPair").onclick = async () => {
+          const r = await callApi({ action: "completeAdminPairing", pairCode: ngxById("axCode").value, deviceName: ngxDeviceName(), deviceType: "web" }, "Authorizing...");
+          if (r.success) { localStorage.setItem(NGX_DEV_KEY, r.deviceToken); return ngxAdminSession(r); }
+          ngxAdminErr(r.message || "Authorization failed.");
+        };
+      }
+      ngxById("adminAuthModal").style.display = "flex";
+    }
+    (function () { // hidden gesture for adding a new device: tap the login logo 7 times
+      let n = 0, t = 0;
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest || !e.target.closest("#loginView .ngi-logo-wrap")) return;
+        const now = Date.now(); n = now - t < 1500 ? n + 1 : 1; t = now;
+        if (n >= 7) { n = 0; ngxOpenAdmin("pair"); }
+      });
+    })();
+    ngxInitAdminIcon();
+
+    /* ---- Push registration (Median OneSignal bridge, guarded) ---- */
+    function ngxRegisterPush() {
+      try {
+        const u = getValidTabSession(); if (!u || u.role === "ADMIN" || !window.median) return;
+        const o = window.median.onesignal;
+        if (o) { if (typeof o.register === "function") o.register(); if (o.externalUserId && o.externalUserId.set) o.externalUserId.set({ externalId: u.memberId }); }
+        ngxApi({ action: "registerPush", token: u.token, memberId: u.memberId, platform: "median" });
+      } catch (e) {}
+    }
+
+    /* ---- Applications: admin panel (view / approve / reject / edit / export / delete) ---- */
+    function ngxDownload(name, text, mime) { const b = new Blob(["\ufeff" + text], { type: mime }); const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href = u; a.download = name; a.click(); URL.revokeObjectURL(u); }
+    function renderAdminApplicationsPanel(apps) {
+      return `
+        <div class="panel">
+          <div class="panel-header"><h2>Applications & Tracking IDs (${apps.length})</h2>
+            <button type="button" class="btn-primary btn-sm" onclick="document.getElementById('createAppModal').style.display='flex'">+ New Application</button></div>
+          <div class="record-stream">${apps.length === 0 ? `<p style="color:var(--text-dim);font-size:.88rem">No applications logged yet.</p>` : apps.map((a) => {
+            const cls = a.status === "Approved" ? "badge-completed" : (a.status === "Rejected" ? "badge-inactive" : "badge-pending");
+            const canDelete = a.exportedAt || a.status !== "Approved";
+            return `<div class="record-ticket ${a.status === "Approved" ? "status-done" : "status-wait"}">
+              <div class="ticket-header"><span class="badge badge-progress">Tracking ID: ${ngxEsc(a.trackingId)}</span><span class="badge ${cls}">${ngxEsc(a.status)}</span></div>
+              <details class="ticket-body"><summary style="cursor:pointer"><strong>${ngxEsc(a.applicantName)}</strong> — ${ngxEsc(a.positionApplied)}</summary>
+                <div><strong>Contact:</strong> ${ngxEsc(a.contactInfo)}</div>${a.notes ? `<div><strong>Notes:</strong> ${ngxEsc(a.notes)}</div>` : ""}
+                ${a.rejectionReason ? `<div><strong>Rejection reason:</strong> ${ngxEsc(a.rejectionReason)}</div>` : ""}
+                <div><strong>Submitted:</strong> ${ngxFmt(a.submittedAt)}${a.exportedAt ? ` · <strong>Exported:</strong> ${ngxFmt(a.exportedAt)}` : ""}</div></details>
+              <div class="ticket-footer"><span style="font-size:.74rem;color:var(--text-dim)">${ngxFmt(a.submittedAt)}</span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  ${a.status !== "Approved" ? `<button type="button" class="btn-primary btn-sm" onclick="ngxAppStatus('${a.trackingId}','Approved')">Approve</button>` : ""}
+                  ${a.status !== "Rejected" ? `<button type="button" class="btn-danger btn-sm" onclick="ngxAppStatus('${a.trackingId}','Rejected')">Reject</button>` : ""}
+                  <button type="button" class="btn-outline btn-sm" onclick="ngxAppEdit('${a.trackingId}','admin')">Edit</button>
+                  <button type="button" class="btn-outline btn-sm" onclick="ngxAppExport('${a.trackingId}')">Export</button>
+                  ${canDelete ? `<button type="button" class="btn-danger btn-sm" onclick="ngxAppDelete('${a.trackingId}')">Delete</button>` : ""}
+                </div></div></div>`; }).join("")}</div></div>`;
+    }
+    async function ngxAppStatus(id, status) {
+      let reason = "";
+      if (status === "Rejected") { reason = prompt("Reason for rejection (optional):") ; if (reason === null) return; }
+      const r = await callApi({ action: "updateApplicationStatus", trackingId: id, status, reason }, "Updating application...");
+      if (r.success) await loadAndRender(); else alert(r.message || "Update failed.");
+    }
+    async function ngxAppExport(id) {
+      const r = await callApi({ action: "adminExportApplication", trackingId: id }, "Exporting...");
+      if (!r.success) return alert(r.message || "Export failed.");
+      const rec = r.record, esc = (v) => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
+      const keys = ["trackingId", "applicantName", "positionApplied", "contactInfo", "notes", "status", "submittedAt", "approvedAt", "memberId"];
+      ngxDownload(`${id}.csv`, keys.join(",") + "\r\n" + keys.map((k) => esc(rec[k])).join(","), "text/csv;charset=utf-8;");
+      await loadAndRender();
+    }
+    async function ngxAppDelete(id) {
+      if (!confirm(`Permanently delete application ${id}? This cannot be undone.`)) return;
+      const r = await callApi({ action: "adminDeleteApplication", trackingId: id }, "Deleting...");
+      if (r.success) { await loadAndRender(); alert(r.message); } else alert(r.message || "Delete failed.");
+    }
+    function ngxAppEdit(id, mode) {
+      const a = (dashboardCache.applications || []).find((x) => x.trackingId === id); if (!a) return;
+      const m = document.createElement("div"); m.className = "modal-backdrop"; m.style.display = "flex";
+      const f = (k, label, area) => `<div class="form-group"><label>${label}</label>${area ? `<textarea id="ae_${k}">${ngxEsc(a[k])}</textarea>` : `<input id="ae_${k}" type="text" value="${ngxEsc(a[k])}" />`}</div>`;
+      m.innerHTML = `<div class="modal-card" style="max-width:460px"><div class="panel-header"><h2>Edit Application ${ngxEsc(id)}</h2><button type="button" class="btn-outline btn-sm" id="ae_x">&times;</button></div>
+        ${f("applicantName", "Applicant Name")}${f("positionApplied", "Position Applied")}${f("contactInfo", "Contact")}${f("notes", "Notes", true)}
+        <button type="button" class="btn-primary" style="width:100%" id="ae_save">Save Changes</button></div>`;
+      document.body.appendChild(m);
+      ngxById("ae_x").onclick = () => m.remove();
+      ngxById("ae_save").onclick = async () => {
+        const r = await callApi({ action: mode === "admin" ? "adminEditApplication" : "userEditApplication", trackingId: id, applicantName: ngxById("ae_applicantName").value, positionApplied: ngxById("ae_positionApplied").value, contactInfo: ngxById("ae_contactInfo").value, notes: ngxById("ae_notes").value }, "Saving...");
+        if (r.success) { m.remove(); await loadAndRender(); if (mode !== "admin") { activeNav = "my_apps"; renderMemberDashboard(); } } else alert(r.message || "Could not save.");
+      };
+    }
+
+    /* ---- Applications: member side ---- */
+    function ngxMyApps() {
+      const apps = dashboardCache.applications || [];
+      return `
+        <div class="panel"><div class="panel-header"><h2>Submit Application</h2></div>
+          <form id="ngxAppForm" class="form-grid">
+            <div class="form-group"><label for="npName">Applicant Name</label><input id="npName" type="text" required value="${ngxEsc(sessionUser.fullName)}"></div>
+            <div class="form-group"><label for="npPos">Position Applied</label><input id="npPos" type="text" required></div>
+            <div class="form-group"><label for="npContact">Contact Information</label><input id="npContact" type="text" required></div>
+            <div class="form-group" style="grid-column:1/-1"><label for="npNotes">Notes (optional)</label><textarea id="npNotes"></textarea></div>
+            <div class="form-group" style="grid-column:1/-1"><button class="btn-primary" type="submit">Submit Application</button><small style="color:var(--text-dim);display:block;margin-top:6px">You can edit a submitted application for 10 minutes. Submitted applications cannot be deleted.</small></div>
+          </form></div>
+        <div class="panel"><div class="panel-header"><h2>Track My Applications</h2><span class="badge badge-progress">${apps.length} Active</span></div>
+          ${apps.length ? `<div class="record-stream">${apps.map((a) => {
+            const left = Math.max(0, Math.ceil((new Date(a.userEditUntil).getTime() - Date.now()) / 60000));
+            return `<div class="record-ticket ${a.status === "Approved" ? "status-done" : "status-wait"}">
+              <div class="ticket-header"><strong>Application Number: ${ngxEsc(a.trackingId)}</strong><span class="badge ${a.status === "Approved" ? "badge-completed" : (a.status === "Rejected" ? "badge-inactive" : "badge-pending")}">${ngxEsc(a.status)}</span></div>
+              <div class="ticket-body"><div><strong>${ngxEsc(a.applicantName)}</strong> — ${ngxEsc(a.positionApplied)}</div>
+                ${a.status === "Approved" ? `<div style="margin-top:6px"><strong>Application Status</strong><br>Approved<br>Your application associated with tracking code ${ngxEsc(a.trackingId)} has been approved by the administrator.</div>` : ""}
+                ${a.status === "Rejected" ? `<div style="margin-top:6px">Your application ${ngxEsc(a.trackingId)} was not approved.${a.rejectionReason ? " Reason: " + ngxEsc(a.rejectionReason) : ""}</div>` : ""}
+                ${a.status === "Pending" ? `<div style="margin-top:6px;color:var(--text-dim)">Awaiting administrator review.${a.editable ? ` You can edit for about ${left} more minute(s).` : ""}</div>` : ""}</div>
+              <div class="ticket-footer"><span style="font-size:.74rem;color:var(--text-dim)">${ngxFmt(a.submittedAt)}</span>
+                ${a.editable ? `<button type="button" class="btn-outline btn-sm" onclick="ngxAppEdit('${a.trackingId}','user')">Edit</button>` : ""}</div></div>`; }).join("")}</div>`
+          : `<p style="color:var(--text-dim)">No active applications.</p>`}</div>`;
+    }
+    function ngxBindMyApps() {
+      const f = ngxById("ngxAppForm"); if (!f) return;
+      f.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const r = await callApi({ action: "userSubmitApplication", applicantName: ngxById("npName").value, positionApplied: ngxById("npPos").value, contactInfo: ngxById("npContact").value, notes: ngxById("npNotes").value }, "Submitting application...");
+        if (r.success) { await loadAndRender(); activeNav = "my_apps"; renderMemberDashboard(); alert(`Application submitted.\nYour tracking code: ${r.trackingCode}`); } else alert(r.message || "Submission failed.");
+      });
+    }
+
+    /* ---- Admin: email + devices ---- */
+    function ngxEmailPanel() {
+      const logs = dashboardCache.emailLog || [];
+      return `<div class="panel"><div class="panel-header"><h2>Send Email</h2></div>
+        <form id="ngxEmailForm">
+          <div class="form-group"><label for="mailTo">Recipient Email Address</label><input id="mailTo" type="email" required></div>
+          <div class="form-group"><label for="mailSubject">Subject</label><input id="mailSubject" type="text" required></div>
+          <div class="form-group"><label for="mailBody">Message</label><textarea id="mailBody" rows="6" required></textarea></div>
+          <button class="btn-primary" type="submit">Send</button></form></div>
+        <div class="panel"><div class="panel-header"><h2>Recent Emails</h2></div>
+        ${logs.length ? `<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Sent</th><th>Recipient</th><th>Subject</th><th>Status</th></tr></thead><tbody>${logs.map((l) => `<tr><td>${ngxFmt(l.sentAt)}</td><td>${ngxEsc(l.recipient)}</td><td>${ngxEsc(l.subject)}</td><td>${ngxEsc(l.status)}${l.error ? "<br><small>" + ngxEsc(l.error) + "</small>" : ""}</td></tr>`).join("")}</tbody></table></div>` : `<p style="color:var(--text-dim)">No emails sent yet.</p>`}</div>`;
+    }
+    function ngxBindEmail() {
+      const f = ngxById("ngxEmailForm"); if (!f) return;
+      f.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const r = await callApi({ action: "adminSendEmail", to: ngxById("mailTo").value, subject: ngxById("mailSubject").value, body: ngxById("mailBody").value }, "Sending email...");
+        alert(r.message || (r.success ? "Email sent." : "Email failed."));
+        if (r.success) { await loadAndRender(); activeNav = "admin_email"; renderAdminDashboard(); }
+      });
+    }
+    function ngxDevicesPanel() {
+      return `<div class="panel"><div class="panel-header"><h2>Trusted Administrator Devices (max 3)</h2></div><div id="ngxDevList"><p style="color:var(--text-dim)">Loading...</p></div></div>`;
+    }
+    async function ngxLoadDevices() {
+      const box = ngxById("ngxDevList"); if (!box) return;
+      const r = await callApi({ action: "adminListDevices" }, "Loading devices...", true);
+      if (!r.success) { box.innerHTML = `<p class="error-msg" style="display:block">${ngxEsc(r.message || "Could not load devices.")}</p>`; return; }
+      box.innerHTML = `<div class="record-stream">${r.devices.map((d) => `<div class="record-ticket"><div class="ticket-header"><strong>${ngxEsc(d.name)}</strong><span class="badge ${d.isMaster ? "badge-completed" : "badge-progress"}">${d.isMaster ? "Master Device" : "Authorized"}</span></div>
+          <div class="ticket-body"><small>Added ${ngxFmt(d.createdAt)} · Last used ${ngxFmt(d.lastSeen)}${d.deviceId === r.currentDeviceId ? " · This device" : ""}</small></div>
+          ${r.isMaster && !d.isMaster ? `<div class="ticket-footer"><span></span><button type="button" class="btn-danger btn-sm" data-rev="${ngxEsc(d.deviceId)}">Revoke</button></div>` : ""}</div>`).join("")}</div>
+        ${r.isMaster ? `<div style="margin-top:14px"><button type="button" class="btn-primary btn-sm" id="ngxNewDev">Authorize New Device</button><p id="ngxPairOut" style="margin-top:10px"></p><small style="color:var(--text-dim)">On the new device, tap the logo on the login screen 7 times, then enter the code.</small></div>` : `<small style="color:var(--text-dim)">Only the Master Device can authorize or revoke devices.</small>`}`;
+      box.querySelectorAll("[data-rev]").forEach((b) => b.addEventListener("click", async () => {
+        if (!confirm("Revoke this device?")) return;
+        const x = await callApi({ action: "adminRevokeDevice", deviceId: b.dataset.rev }, "Revoking...");
+        alert(x.message || ""); ngxLoadDevices();
+      }));
+      const nb = ngxById("ngxNewDev");
+      if (nb) nb.addEventListener("click", async () => {
+        const x = await callApi({ action: "createAdminPairRequest", deviceName: "New Admin Device" }, "Creating code...");
+        if (x.success) ngxById("ngxPairOut").innerHTML = `Authorization code: <strong style="font-size:1.3rem;letter-spacing:3px">${x.pairCode}</strong> (valid ${x.expiresInMinutes} minutes)`;
+        else alert(x.message || "Could not create code.");
+      });
+    }
+
+    /* ---- Independent Submit button for every profile field ---- */
+    (function () {
+      const map = [["editFullName", "fullName"], ["editPosition", "position"], ["editSchemaRole", "role"], ["editNewMemberId", "memberId"], ["editMemberStatus", "status"], ["editMemberEmail", "email"], ["editAvatarUrl", "avatar"], ["editNewPassword", "password"]];
+      const form = ngxById("editMemberProfileForm"); if (!form) return;
+      form.querySelectorAll("[required]").forEach((x) => x.removeAttribute("required"));
+      const sub = form.querySelector('button[type="submit"]'); if (sub) sub.style.display = "none";
+      const av = ngxById("editAvatarUrl").closest(".form-group");
+      av.insertAdjacentHTML("beforeend", `<input id="ngxAvatarFile" type="file" accept="image/png,image/jpeg,image/webp" style="margin-top:8px" />`);
+      form.addEventListener("submit", (e) => e.preventDefault());
+      map.forEach(([id, field]) => {
+        const el = ngxById(id), g = el.closest(".form-group"), b = document.createElement("button");
+        b.type = "button"; b.className = "btn-primary btn-sm"; b.style.marginTop = "8px"; b.textContent = "Submit"; g.appendChild(b);
+        b.addEventListener("click", async () => {
+          let val = el.value;
+          if (field === "avatar") { const file = ngxById("ngxAvatarFile").files[0]; if (file) { try { val = await readCompressedBrandLogo(file); } catch (e) { return alert(e.message); } } }
+          const orig = ngxById("editOrigMemberId").value;
+          const r = await callApi({ action: "adminUpdateMemberField", memberId: orig, field, value: val }, "Updating...");
+          if (!r.success) return alert(r.message || "Update failed.");
+          if (field === "memberId") ngxById("editOrigMemberId").value = String(val).trim();
+          if (field === "password") el.value = "";
+          await loadAndRender(); alert(r.message);
+        });
+      });
+    })();
+    function ngxBindBrand() {
+      const nb = ngxById("ngxSaveName"), lb = ngxById("ngxSaveLogo");
+      if (nb) nb.addEventListener("click", async () => { const r = await callApi({ action: "adminUpdateBranding", field: "brandName", value: ngxById("setBrandName").value }, "Updating name..."); alert(r.message || ""); if (r.success) await loadAndRender(); });
+      if (lb) lb.addEventListener("click", async () => {
+        const f = ngxById("setBrandLogo").files[0]; if (!f) return alert("Choose a logo image first.");
+        let data; try { data = await readCompressedBrandLogo(f); } catch (e) { return alert(e.message); }
+        const r = await callApi({ action: "adminUpdateBranding", field: "brandLogo", value: data }, "Updating logo..."); alert(r.message || ""); if (r.success) await loadAndRender();
+      });
+    }
+
+    /* ---- Mobile Back button: in-app history, dashboard needs 3 presses to exit ---- */
+    (function () {
+      let ui = 0, ignore = 0;
+      const home = () => (sessionUser && sessionUser.role === "ADMIN" ? "admin_overview" : "overview");
+      const rerender = () => { if (!sessionUser) return; sessionUser.role === "ADMIN" ? renderAdminDashboard() : renderMemberDashboard(); };
+      const toast = (m) => {
+        let t = ngxById("ngxToast");
+        if (!t) { t = document.createElement("div"); t.id = "ngxToast"; t.style.cssText = "position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--surface-elevated,#1b2540);color:#fff;border:1px solid var(--border-subtle,#2a3556);padding:10px 16px;border-radius:12px;font-size:.85rem;z-index:100000;transition:opacity .25s;opacity:0;pointer-events:none"; document.body.appendChild(t); }
+        t.textContent = m; t.style.opacity = "1"; clearTimeout(t._h); t._h = setTimeout(() => { t.style.opacity = "0"; }, 1800);
+      };
+      const modals = () => [...document.querySelectorAll(".modal-backdrop")].filter((m) => getComputedStyle(m).display !== "none");
+      const sidebarOpen = () => { const s = ngxById("sidebar"); return !!(s && s.classList.contains("open")); };
+      const openCount = () => modals().length + (sidebarOpen() ? 1 : 0);
+      const guards = (from) => { for (let l = from; l <= 3; l++) history.pushState({ ngi: "g", lvl: l }, ""); };
+      history.replaceState({ ngi: "root" }, ""); guards(1);
+      window.ngxNavPush = (nav) => {
+        const st = history.state || {};
+        if (ui > 0 && sidebarOpen()) { history.replaceState({ ngi: "nav", nav }, ""); ui--; return; }
+        if (st.ngi === "nav" && st.nav === nav) return;
+        if (st.ngi === "g" && nav === home()) return;
+        history.pushState({ ngi: "nav", nav }, "");
+      };
+      new MutationObserver(() => {
+        const n = openCount();
+        if (n > ui) { for (let i = ui; i < n; i++) history.pushState({ ngi: "ui" }, ""); ui = n; }
+        else if (n < ui) { const d = ui - n; ui = n; ignore++; history.go(-d); }
+      }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["style", "class"] });
+      window.addEventListener("popstate", (e) => {
+        if (ignore > 0) { ignore--; return; }
+        const st = e.state || {};
+        if (ui > 0) {
+          ui--; const m = modals().pop();
+          if (m) { if (m.dataset.keep) m.style.display = "none"; else if (m.id) m.style.display = "none"; else m.remove(); } else closeSidebar();
+          return;
+        }
+        if (st.ngi === "nav") { if (activeNav !== st.nav) { activeNav = st.nav; rerender(); } return; }
+        if (sessionUser && activeNav !== home()) { activeNav = home(); rerender(); if (st.ngi === "g") guards(st.lvl + 1); return; }
+        if (st.ngi === "g") { toast(st.lvl === 2 ? "Press Back 2 more times to exit" : "Press Back once more to exit"); return; }
+        if (st.ngi === "root") {
+          if (confirm("Exit NGI Portal?")) { history.back(); }
+          else guards(1);
+        }
+      });
+    })();
+
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('pwabuilder-sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
