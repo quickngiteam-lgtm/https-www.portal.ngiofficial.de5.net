@@ -1,0 +1,31 @@
+{
+  "id": "./",
+  "name": "NGI Leader's Portal",
+  "short_name": "NGI Portal",
+  "description": "Official NGI Leaders Portal for leadership, member management, attendance and organizational activities.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#071930",
+  "theme_color": "#0b2545",
+  "icons": [
+    {
+      "src": "./icons/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": [
+    "business"
+  ]
+}
