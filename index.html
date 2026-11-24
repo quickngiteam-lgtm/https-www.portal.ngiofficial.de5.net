@@ -1656,7 +1656,7 @@
         const res = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(Object.assign({ token: (sessionUser && sessionUser.token) || "" }, payload))
+          body: JSON.stringify(Object.assign({ token: (sessionUser && sessionUser.token) || "", adminToken: (sessionUser && sessionUser.token) || "", deviceId: (sessionUser && sessionUser.deviceId) || "" }, payload))
         });
         const data = await res.json();
         hideLoader();
@@ -3213,7 +3213,7 @@
     const ngxFmt = (iso) => { try { return new Date(iso).toLocaleString("en-PK", { timeZone: "Asia/Karachi", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }); } catch (e) { return iso || ""; } };
     async function ngxApi(payload) {
       try {
-        const r = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+        const r = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ memberSessionToken: (sessionUser && sessionUser.token) || "" }, payload)) });
         return await r.json();
       } catch (e) { return { success: false, offline: true, message: "Network error. Check your connection." }; }
     }
@@ -3231,7 +3231,7 @@
     function ngxAdminErr(m) { const e = ngxById("adminAuthError"); e.textContent = m; e.style.display = m ? "block" : "none"; }
     function ngxAdminSession(res) {
       closeModal("adminAuthModal");
-      saveTabSession({ memberId: "NGI-ADMIN", fullName: "NGI System Admin", position: "Full System Administrator", role: "ADMIN", avatar: "", token: res.token, isMaster: !!res.isMaster });
+      saveTabSession({ memberId: "NGI-ADMIN", fullName: "NGI System Admin", position: "Full System Administrator", role: "ADMIN", avatar: "", token: res.token, deviceId: res.deviceId || "", isMaster: !!res.isMaster });
       activeNav = "admin_overview";
       loadAndRender();
     }
