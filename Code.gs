@@ -912,9 +912,27 @@ function ngiRegisterPushToken_(ss,p) {
   return {success:true};
 }
 function ngiSendAnnouncement_(ss,p) {
-  ngiRequireAdmin_(ss,p); const subject=String(p.subject||"").trim(),body=String(p.body||"").trim();
-  if(!subject||!body)return {success:false,message:"Subject and message required."};
-  let sent=0;
-  if(p.emailUsers){ngiRows_(ss,"Members").filter(m=>m.status==="Active"&&m.email).forEach(m=>{try{MailApp.sendEmail({to:m.email,subject:subject,body:body,name:"NGI Team"});sent++;}catch(e){}});}
-  return {success:true,emailCount:sent,push:{success:false,message:"Push delivery requires Firebase Cloud Messaging configuration and frontend service worker."}};
+  ngiRequireAdmin_(ss,p);
+  const subject=String(p.subject||"").trim(), body=String(p.body||"").trim();
+  if(!subject||!body) return {success:false,message:"Subject and message required."};
+  const log=ss.getSheetByName("EmailLog");
+  let sent=0, failed=0;
+  const errors=[];
+  if(p.emailUsers) {
+    ngiRows_(ss,"Members").filter(m=>String(m.status)==="Active"&&String(m.email||"").trim()).forEach(m=>{
+      const to=String(m.email).trim(), now=new Date().toISOString();
+      try {
+        MailApp.sendEmail({to:to,subject:subject,body:body,name:"NGI Team"});
+        sent++;
+        if(log) log.appendRow([Utilities.getUuid(),to,subject,now,"Sent","Announcement"]);
+      } catch(e) {
+        failed++;
+        const message=String(e&&e.message||e);
+        errors.push(to+": "+message);
+        if(log) log.appendRow([Utilities.getUuid(),to,subject,now,"Failed",message]);
+      }
+    });
+  }
+  logAudit(ss,"NGI-ADMIN","NGI System Admin","Administrator","Announcements","Announcement published: "+subject,"Email sent: "+sent+", failed: "+failed);
+  return {success:true,emailCount:sent,failedCount:failed,errors:errors.slice(0,10),push:{success:false,message:"Push delivery requires Firebase Cloud Messaging configuration and frontend service worker."}};
 }
