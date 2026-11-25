@@ -3478,7 +3478,7 @@
         let delivery = "Announcement published in the Notices area.";
         if (ngxById("ngxAnnEmail").checked) {
           const sent = await callApi({ action: "sendAnnouncement", subject, body, emailUsers: true }, "Sending announcement emails...");
-          delivery += sent.success ? ` Email sent to ${Number(sent.emailCount || 0)} active member(s).` : ` Email delivery issue: ${sent.message || "unknown error"}`;
+          delivery += sent.success ? ` Email sent to ${Number(sent.emailCount || 0)} active member(s); ${Number(sent.failedCount || 0)} failed.` : ` Email delivery issue: ${sent.message || "unknown error"}`;
         }
         alert(delivery + " Push notifications remain unavailable until Firebase Cloud Messaging is configured.");
         await loadAndRender();
