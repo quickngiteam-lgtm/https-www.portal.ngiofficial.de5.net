@@ -1749,7 +1749,7 @@
             return;
           }
           await cacheUserForOfflineUnlock(res.user, password);
-          res.user.token = res.token;
+          res.user.token = res.user.token || res.token || res.memberSessionToken || "";
           saveTabSession(res.user);
           activeNav = "overview";
           await loadAndRender();
