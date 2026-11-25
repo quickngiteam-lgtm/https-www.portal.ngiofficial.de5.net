@@ -1640,6 +1640,7 @@
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({
               token: validUser.token,
+              memberSessionToken: validUser.token,
               action: "saveRecord",
               memberId: item.memberId,
               role: validUser.role,
@@ -1654,6 +1655,9 @@
           if (resData && resData.success === true) {
             await idbDeletePendingRecord(item.recordId);
             syncedCount++;
+          } else if (resData && resData.authExpired) {
+            clearTabSession("Session expired. Please sign in again to sync offline records.");
+            break;
           }
         }
         if (syncedCount > 0) {
@@ -1784,7 +1788,7 @@
 
     document.getElementById("logoutBtn").addEventListener("click", () => {
       const u = sessionUser;
-      if (u && u.token) fetch(API_URL, { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: u.role === "ADMIN" ? "adminLogout" : "userLogout", token: u.token }) }).catch(() => {});
+      if (u && u.token) fetch(API_URL, { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(u.role === "ADMIN" ? { action: "adminLogout", deviceId: u.deviceId || "", adminToken: u.token, token: u.token } : { action: "userLogout", memberId: u.memberId, memberSessionToken: u.token, token: u.token }) }).catch(() => {});
       clearTabSession("You have been securely logged out.");
     });
     document.getElementById("refreshDataBtn").addEventListener("click", () => {
@@ -1805,6 +1809,8 @@
         const item = pendingItems[i];
         const resData = await callApi({
           action: "saveRecord",
+          token: validUser.token,
+          memberSessionToken: validUser.token,
           memberId: item.memberId,
           role: validUser.role,
           section: item.section,
@@ -1813,9 +1819,12 @@
           createdAt: item.createdAt,
           fields: item.fields
         }, `Syncing ${i + 1}/${pendingItems.length}...`, true);
-        if (resData && resData.success) {
+        if (resData && resData.success === true) {
           await idbDeletePendingRecord(item.recordId);
           syncedCount++;
+        } else if (resData && resData.authExpired) {
+          clearTabSession("Session expired. Please sign in again to sync offline records.");
+          break;
         }
       }
       await refreshPendingCache();
@@ -3499,8 +3508,9 @@
         ${r.isMaster ? `<div style="margin-top:14px"><button type="button" class="btn-primary btn-sm" id="ngxNewDev">Authorize New Device</button><p id="ngxPairOut" style="margin-top:10px"></p><small style="color:var(--text-dim)">On the new device, tap the logo on the login screen 7 times, then enter the code.</small></div>` : `<small style="color:var(--text-dim)">Only the Master Device can authorize or revoke devices.</small>`}`;
       box.querySelectorAll("[data-rev]").forEach((b) => b.addEventListener("click", async () => {
         if (!confirm("Revoke this device?")) return;
-        const x = await callApi({ action: "adminRevokeDevice", deviceId: b.dataset.rev }, "Revoking...");
-        alert(x.message || ""); ngxLoadDevices();
+        const x = await callApi({ action: "adminRevokeDevice", targetDeviceId: b.dataset.rev }, "Revoking...");
+        alert(x.success ? "Device revoked." : (x.message || "Could not revoke device."));
+        ngxLoadDevices();
       }));
       const nb = ngxById("ngxNewDev");
       if (nb) nb.addEventListener("click", async () => {
