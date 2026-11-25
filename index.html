@@ -22,6 +22,22 @@
     @keyframes ngiFloat{50%{transform:translateY(-8px) scale(1.025)}}
     @keyframes ngiLoad{from{transform:translateX(-120%)}to{transform:translateX(300%)}}
     @media(prefers-reduced-motion:reduce){#ngiSplash img,#ngiSplash .splash-line:after{animation:none}}
+
+    /* NGI portal scrolling and safe-area fix (login styles intentionally untouched) */
+    html { min-height: 100%; height: auto; overflow-x: hidden; overflow-y: auto; }
+    body { min-height: 100%; height: auto; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .app-shell { min-height: 100vh; min-height: 100dvh; height: auto; overflow: visible; }
+    .main-area { min-height: 100vh; min-height: 100dvh; height: auto; padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px)); }
+    #dynamicContent { min-height: 1px; height: auto; overflow: visible; scroll-behavior: auto; }
+    .sidebar { height: 100vh; height: 100dvh; overflow: hidden; }
+    .nav-list { min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal-backdrop { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal-card { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overscroll-behavior: contain; }
+    @media (max-width: 640px) {
+      .main-area { padding-left: 12px; padding-right: 12px; }
+      .panel { min-width: 0; }
+      .topbar { min-width: 0; }
+    }
   </style>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3210,7 +3226,7 @@
     const NGX_DEV_KEY = "ngi_admin_device_token";
     const ngxById = (id) => document.getElementById(id);
     const ngxEsc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    const ngxFmt = (iso) => { try { return new Date(iso).toLocaleString("en-PK", { timeZone: "Asia/Karachi", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }); } catch (e) { return iso || ""; } };
+    const ngxFmt = (value) => { try { if (value == null || value === "") return ""; const raw = String(value).trim(); const hasZone = /(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(raw); const normalized = /^\\d{4}-\\d{2}-\\d{2}$/.test(raw) ? raw + "T00:00:00Z" : (hasZone ? raw : raw.replace(" ", "T") + "Z"); const d = new Date(normalized); if (!Number.isFinite(d.getTime())) return raw; return new Intl.DateTimeFormat("en-PK", { timeZone: "Asia/Karachi", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }).format(d); } catch (e) { return String(value || ""); } };
     async function ngxApi(payload) {
       try {
         const r = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ memberSessionToken: (sessionUser && sessionUser.token) || "" }, payload)) });
