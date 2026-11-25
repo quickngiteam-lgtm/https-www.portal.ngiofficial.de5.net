@@ -815,6 +815,143 @@
       #portalShell > .main-area { width:100% !important; max-width:none !important; margin:0 !important; }
     }
   </style>
+
+  <style id="ngi-soft-blue-theme">
+    /* Signed-in portal colour theme only. Login/Ajrak artwork and layout remain untouched. */
+    #portalShell {
+      --bg-deep: #E8F0F8;
+      --surface-card: #FFFFFF;
+      --surface-elevated: #DCE8F4;
+      --neon-blue: #155E75;
+      --emerald-glow: #0F8B8D;
+      --text-main: #173D70;
+      --text-dim: #526A82;
+      --border-subtle: rgba(23, 61, 112, .14);
+      --border-glow: rgba(21, 94, 117, .25);
+      background: #E8F0F8;
+      color: #173D70;
+    }
+    #portalShell .sidebar {
+      background: linear-gradient(180deg, #FFFFFF 0%, #E8F0F8 100%);
+      color: #173D70;
+      border-right-color: rgba(21,94,117,.22);
+      box-shadow: 12px 0 36px rgba(23,61,112,.12);
+    }
+    #portalShell .sidebar-top,
+    #portalShell .sidebar-footer { border-color: rgba(23,61,112,.14); }
+    #portalShell .sidebar-brand,
+    #portalShell .nav-label { color: #155E75; }
+    #portalShell .member-mini-card,
+    #portalShell .status-pill-box,
+    #portalShell .record-ticket,
+    #portalShell .feed-item,
+    #portalShell .member-dir-card {
+      background: #FFFFFF;
+      color: #173D70;
+      border-color: rgba(21,94,117,.20);
+    }
+    #portalShell .nav-item { color: #173D70; }
+    #portalShell .nav-item:hover { background: #DCE8F4; border-color: rgba(21,94,117,.24); }
+    #portalShell .nav-item.active {
+      background: linear-gradient(105deg, #155E75, #0F8B8D 52%, #14B8A6);
+      border-color: transparent;
+      color: #FFFFFF;
+    }
+    #portalShell .topbar {
+      background: linear-gradient(135deg, #FFFFFF 0%, #DCE8F4 100%);
+      border-color: rgba(21,94,117,.22);
+      box-shadow: 0 12px 30px rgba(23,61,112,.10);
+    }
+    #portalShell .main-area { background: #E8F0F8; }
+    #portalShell .panel,
+    #portalShell .stat-card {
+      background: #FFFFFF;
+      color: #173D70;
+      border-color: rgba(21,94,117,.18);
+      box-shadow: 0 5px 18px rgba(23,61,112,.05);
+    }
+    #portalShell .panel-header h2,
+    #portalShell .stat-card .val,
+    #portalShell .ticket-body strong { color: #173D70; }
+    #portalShell .stat-card h3,
+    #portalShell .ticket-body,
+    #portalShell .nav-label { color: #526A82; }
+    #portalShell .home-banner {
+      background: #DCE8F4;
+      border-color: rgba(21,94,117,.22);
+      color: #173D70;
+    }
+    #portalShell .notice-card {
+      background: linear-gradient(135deg, #DCE8F4, #FFFFFF);
+      border-color: rgba(21,94,117,.22);
+      border-left-color: #0F8B8D;
+      color: #173D70;
+    }
+    #portalShell .btn-primary,
+    #portalShell .btn-sync,
+    #portalShell .btn-outline,
+    #portalShell .btn-menu-trigger {
+      background: linear-gradient(105deg, #155E75, #0F8B8D 52%, #14B8A6);
+      color: #FFFFFF;
+      border: 1px solid rgba(255,255,255,.35);
+      box-shadow: 0 6px 18px rgba(15,118,110,.20);
+    }
+    #portalShell .btn-primary:hover:not(:disabled),
+    #portalShell .btn-sync:hover:not(:disabled),
+    #portalShell .btn-outline:hover:not(:disabled),
+    #portalShell .btn-menu-trigger:hover {
+      filter: brightness(1.07);
+      box-shadow: 0 8px 22px rgba(15,118,110,.28);
+    }
+    #portalShell .btn-menu-trigger span { background: #FFFFFF; }
+    #portalShell .btn-danger {
+      background: rgba(239,68,68,.10);
+      color: #B42332;
+      border-color: rgba(180,35,50,.28);
+      box-shadow: none;
+    }
+    #portalShell .filters-bar input,
+    #portalShell .filters-bar select {
+      background: #FFFFFF;
+      color: #173D70;
+      border-color: rgba(21,94,117,.25);
+    }
+    #portalShell .filters-bar input::placeholder { color: #71849A; }
+    #portalShell .ticket-footer { border-color: rgba(23,61,112,.14); }
+
+    /* Shared modal forms are outside portalShell; keep the Ajrak login screen excluded. */
+    .modal-backdrop {
+      background: rgba(23,61,112,.34);
+    }
+    .modal-card {
+      background: #FFFFFF;
+      color: #173D70;
+      border-color: rgba(21,94,117,.25);
+      box-shadow: 0 20px 55px rgba(23,61,112,.20);
+    }
+    .modal-card .form-group label { color: #173D70; }
+    .modal-card .form-group input,
+    .modal-card .form-group select,
+    .modal-card .form-group textarea {
+      background: #FFFFFF;
+      color: #173D70;
+      border-color: #A9BED2;
+    }
+    .modal-card .form-group input:focus,
+    .modal-card .form-group select:focus,
+    .modal-card .form-group textarea:focus {
+      border-color: #0F8B8D;
+      box-shadow: 0 0 0 3px rgba(15,139,141,.14);
+    }
+    .modal-card .btn-primary,
+    .modal-card .btn-outline,
+    .modal-card .btn-sync {
+      background: linear-gradient(105deg, #155E75, #0F8B8D 52%, #14B8A6);
+      color: #FFFFFF;
+      border: 1px solid rgba(255,255,255,.35);
+      box-shadow: 0 6px 18px rgba(15,118,110,.20);
+    }
+  </style>
 </head>
 <body>
   <div id="ngiSplash" aria-label="NGI Portal loading">
