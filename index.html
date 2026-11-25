@@ -2367,6 +2367,7 @@
         ["admin_complaints", "Complaints & Support"],
         ["admin_notices", "Notices & Email Alerts"],
         ["admin_email", "Send Email"],
+        ["admin_announcements", "Announcements"],
         ["admin_notes", "Leader Notes Inbox"],
         ["admin_settings", "Portal & Content Settings"],
         ["admin_devices", "Admin Devices"],
@@ -2434,6 +2435,7 @@
         bindAdminSettingsForm();
         return;
       }
+      if (activeNav === "admin_announcements") { container.innerHTML = ngxAnnouncementPanel(); ngxBindAnnouncement(); return; }
       if (activeNav === "admin_email") { container.innerHTML = ngxEmailPanel(); ngxBindEmail(); return; }
       if (activeNav === "admin_devices") { container.innerHTML = ngxDevicesPanel(); ngxLoadDevices(); return; }
       if (activeNav === "admin_audit") {
@@ -3452,6 +3454,36 @@
         const r = await callApi({ action: "adminSendEmail", to: ngxById("mailTo").value, subject: ngxById("mailSubject").value, body: ngxById("mailBody").value }, "Sending email...");
         alert(r.message || (r.success ? "Email sent." : "Email failed."));
         if (r.success) { await loadAndRender(); activeNav = "admin_email"; renderAdminDashboard(); }
+      });
+    }
+    function ngxAnnouncementPanel() {
+      return `<div class="panel"><div class="panel-header"><h2>Publish Announcement</h2></div>
+        <form id="ngxAnnouncementForm">
+          <div class="form-group"><label for="ngxAnnSubject">Announcement Subject</label><input id="ngxAnnSubject" type="text" maxlength="160" required></div>
+          <div class="form-group"><label for="ngxAnnBody">Announcement Content</label><textarea id="ngxAnnBody" rows="6" maxlength="10000" required></textarea></div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px"><input id="ngxAnnEmail" type="checkbox" style="width:auto"><label for="ngxAnnEmail" style="margin:0">Also email all active members with an email address</label></div>
+          <p style="font-size:.82rem;color:var(--text-dim)">Publishing adds this announcement to the existing Notices area. Push delivery is not enabled until Firebase Cloud Messaging is configured.</p>
+          <button class="btn-primary" type="submit">Publish Announcement</button>
+        </form></div>`;
+    }
+    function ngxBindAnnouncement() {
+      const form = ngxById("ngxAnnouncementForm"); if (!form) return;
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const subject = ngxById("ngxAnnSubject").value.trim();
+        const body = ngxById("ngxAnnBody").value.trim();
+        if (!subject || !body) return alert("Enter both a subject and announcement content.");
+        const save = await callApi({ action: "saveNotice", title: subject, content: body, priority: "Normal" }, "Publishing announcement...");
+        if (!save.success) return alert(save.message || "Announcement could not be saved.");
+        let delivery = "Announcement published in the Notices area.";
+        if (ngxById("ngxAnnEmail").checked) {
+          const sent = await callApi({ action: "sendAnnouncement", subject, body, emailUsers: true }, "Sending announcement emails...");
+          delivery += sent.success ? ` Email sent to ${Number(sent.emailCount || 0)} active member(s).` : ` Email delivery issue: ${sent.message || "unknown error"}`;
+        }
+        alert(delivery + " Push notifications remain unavailable until Firebase Cloud Messaging is configured.");
+        await loadAndRender();
+        activeNav = "admin_announcements";
+        renderAdminDashboard();
       });
     }
     function ngxDevicesPanel() {
