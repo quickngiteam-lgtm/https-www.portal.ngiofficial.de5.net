@@ -687,6 +687,19 @@
     #dynamicContent { scroll-behavior: smooth; }
     @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
   </style>
+
+  <style id="ngi-scroll-time-hotfix">
+    html, body { height:auto !important; min-height:100% !important; overflow-x:hidden !important; overflow-y:auto !important; }
+    body { position:static !important; display:block !important; -webkit-overflow-scrolling:touch !important; touch-action:pan-y !important; }
+    #portalShell.app-shell { display:block; min-height:100vh !important; min-height:100dvh !important; height:auto !important; overflow:visible !important; }
+    #portalShell .main-area { height:auto !important; min-height:100vh !important; min-height:100dvh !important; overflow:visible !important; }
+    #dynamicContent { height:auto !important; min-height:1px !important; overflow:visible !important; touch-action:pan-y !important; }
+    .panel, .record-stream, .data-table-wrap { max-height:none; }
+    .sidebar { height:100vh !important; height:100dvh !important; overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; }
+    .nav-list { flex:1 1 auto !important; overflow-y:auto !important; min-height:0 !important; }
+    .modal-backdrop { overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; }
+    .modal-card { max-height:calc(100dvh - 24px) !important; overflow-y:auto !important; }
+  </style>
 </head>
 <body>
   <div id="ngiSplash" aria-label="NGI Portal loading">
@@ -3226,7 +3239,7 @@
     const NGX_DEV_KEY = "ngi_admin_device_token";
     const ngxById = (id) => document.getElementById(id);
     const ngxEsc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    const ngxFmt = (value) => { try { if (value == null || value === "") return ""; const raw = String(value).trim(); const hasZone = /(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(raw); const normalized = /^\\d{4}-\\d{2}-\\d{2}$/.test(raw) ? raw + "T00:00:00Z" : (hasZone ? raw : raw.replace(" ", "T") + "Z"); const d = new Date(normalized); if (!Number.isFinite(d.getTime())) return raw; return new Intl.DateTimeFormat("en-PK", { timeZone: "Asia/Karachi", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }).format(d); } catch (e) { return String(value || ""); } };
+    const ngxFmt = (value) => { try { if (value == null || value === "") return ""; const raw = String(value).trim(); const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw); const normalized = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw + "T00:00:00Z" : (hasZone ? raw : raw.replace(" ", "T") + "Z"); const d = new Date(normalized); if (!Number.isFinite(d.getTime())) return raw; return new Intl.DateTimeFormat("en-PK", { timeZone: "Asia/Karachi", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }).format(d); } catch (e) { return String(value || ""); } };
     async function ngxApi(payload) {
       try {
         const r = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ memberSessionToken: (sessionUser && sessionUser.token) || "" }, payload)) });
