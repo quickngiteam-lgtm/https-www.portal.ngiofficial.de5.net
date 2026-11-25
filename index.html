@@ -2771,7 +2771,10 @@
     function applyBranding(settings) {
       if (!settings) return;
       const logo = settings.brandLogoUrl || NGI_LOGO_URL;
-      document.querySelectorAll('img[src*="icons/app-icon-"]').forEach(img => { img.src = logo; });
+      // Keep the official NGI logo on the public login screen; admin branding applies elsewhere.
+      document.querySelectorAll('img[src*="icons/app-icon-"]').forEach(img => {
+        if (!img.closest("#loginView")) img.src = logo;
+      });
       if (settings.brandName) document.querySelectorAll('.sidebar-brand span,.splash-name').forEach(el => el.textContent=settings.brandName);
       document.title = settings.brandName || "NGI Leader's & Admin Portal";
     }
