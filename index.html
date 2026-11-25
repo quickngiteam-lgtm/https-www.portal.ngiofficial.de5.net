@@ -688,17 +688,33 @@
     @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
   </style>
 
-  <style id="ngi-scroll-time-hotfix">
-    html, body { height:auto !important; min-height:100% !important; overflow-x:hidden !important; overflow-y:auto !important; }
-    body { position:static !important; display:block !important; -webkit-overflow-scrolling:touch !important; touch-action:pan-y !important; }
-    #portalShell.app-shell { display:block; min-height:100vh !important; min-height:100dvh !important; height:auto !important; overflow:visible !important; }
-    #portalShell .main-area { height:auto !important; min-height:100vh !important; min-height:100dvh !important; overflow:visible !important; }
+  <style id="ngi-scroll-container-fix">
+    /* Give the signed-in workspace its own reliable scroll container. */
+    html, body { min-height:100%; height:auto !important; overflow-x:hidden !important; overflow-y:auto !important; }
+    body { display:block !important; position:relative !important; }
+    #portalShell.app-shell { display:block; height:auto !important; min-height:100vh !important; min-height:100dvh !important; overflow:visible !important; }
+    #portalShell > .main-area {
+      box-sizing:border-box !important;
+      height:100vh !important;
+      height:100dvh !important;
+      min-height:100vh !important;
+      min-height:100dvh !important;
+      overflow-x:hidden !important;
+      overflow-y:auto !important;
+      -webkit-overflow-scrolling:touch !important;
+      overscroll-behavior-y:contain;
+      touch-action:pan-y !important;
+      padding-bottom:calc(48px + env(safe-area-inset-bottom, 0px)) !important;
+    }
     #dynamicContent { height:auto !important; min-height:1px !important; overflow:visible !important; touch-action:pan-y !important; }
-    .panel, .record-stream, .data-table-wrap { max-height:none; }
-    .sidebar { height:100vh !important; height:100dvh !important; overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; }
-    .nav-list { flex:1 1 auto !important; overflow-y:auto !important; min-height:0 !important; }
+    #portalShell .panel, #portalShell .record-stream, #portalShell .data-table-wrap { max-height:none; }
+    #sidebar { height:100vh !important; height:100dvh !important; overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; }
+    #navList, .nav-list { min-height:0 !important; overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; }
     .modal-backdrop { overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; }
-    .modal-card { max-height:calc(100dvh - 24px) !important; overflow-y:auto !important; }
+    .modal-card { max-height:calc(100dvh - 24px) !important; overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; }
+    @media (max-width:640px) {
+      #portalShell > .main-area { width:100% !important; max-width:none !important; margin:0 !important; }
+    }
   </style>
 </head>
 <body>
