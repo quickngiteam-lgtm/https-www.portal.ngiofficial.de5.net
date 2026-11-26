@@ -18,8 +18,13 @@ self.addEventListener("fetch", event => {
   url.search = "";
   if (!SHELL_URLS.has(url.href)) return;
 
-  event.respondWith(fetch(event.request).catch(async () => {
-    const cache = await caches.open(CACHE);
-    return (await cache.match(url.href)) || Response.error();
-  }));
+  event.respondWith(loadShellAsset(event.request, url.href));
 });
+
+async function loadShellAsset(request, cacheUrl) {
+  const response = await fetch(request).catch(() => undefined);
+  if (response && response.status < 500) return response;
+
+  const cache = await caches.open(CACHE);
+  return (await cache.match(cacheUrl)) || response || Response.error();
+}
