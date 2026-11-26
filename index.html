@@ -956,6 +956,34 @@
       box-shadow: 0 6px 18px rgba(15,118,110,.20);
     }
   </style>
+  <script>
+    (() => {
+      const release = "ngi-review-push-v1";
+      const key = "ngi_ready_backend_release";
+      const openRelease = () => location.replace("./portal-v2.html" + location.search + location.hash);
+      if (!navigator.onLine) {
+        if (localStorage.getItem(key) === release) openRelease();
+        return;
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3500);
+      const endpoint = new URL("https://script.google.com/macros/s/AKfycby5LnAXTM3zjVtaON1vBeTI4Qm9-ZvmQ3wlSNPyF3SkGMmoahT2UJzp04i4II2Xxmp6/exec");
+      endpoint.searchParams.set("portalRelease", release);
+      fetch(endpoint, {signal: controller.signal, cache: "no-store"})
+        .then(response => response.ok ? response.json() : null)
+        .then(result => {
+          if (result?.portalRelease !== release) {
+            localStorage.removeItem(key);
+            return;
+          }
+          localStorage.setItem(key, release);
+          openRelease();
+        })
+        .catch(() => {})
+        .finally(() => clearTimeout(timeout));
+    })();
+  </script>
 </head>
 <body>
   <div id="ngiSplash" aria-label="NGI Portal loading">
