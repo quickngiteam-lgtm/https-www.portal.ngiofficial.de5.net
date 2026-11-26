@@ -1,17 +1,14 @@
-# NGI Portal (frontend)
+# NGI Portal
 
-Static site: upload these files to a GitHub repo and enable GitHub Pages (or use any static host).
-Do NOT upload `Code.gs` to a public repo; paste it into the Apps Script project instead.
+This repository hosts the static portal frontend on GitHub Pages. Keep the Apps Script backend and its configuration in the private Apps Script project.
 
-## Backend setup (Google Apps Script, signed in as quickngiteam@gmail.com)
-1. Replace the project's Code.gs with the supplied Code.gs.
-2. Run `setupNgiPortal()` once and approve permissions (Sheets, Mail, Drive, external requests).
-3. Deploy > Manage deployments > edit the existing Web app deployment > New version (keeps the same /exec URL).
-4. Script properties (Project Settings), optional, for push notifications:
-   - `ONESIGNAL_APP_ID`, `ONESIGNAL_API_KEY` (from your OneSignal app linked to Median)
-   - `PORTAL_URL` (your GitHub Pages URL)
-5. Open the site on your phone: the Authorized Admin Login button appears only until a master device exists.
-   Send the code to the NGI email, verify, and that device becomes the Master Device.
-6. Add more admin devices: Admin Devices tab > Authorize New Device, then on the new device tap the login logo 7 times and enter the code.
+## Release order
 
-Recovery if the master device is lost: run `resetAdminDevices()` in the Apps Script editor.
+1. Apply the matching backend update in the private Apps Script project. Deploy a new version of the existing web app so the frontend keeps the same endpoint.
+2. Check the backend with a test member and test administrator. Confirm that records and attendance enter Pending Approvals and that the admin can approve or delete a test entry.
+3. Merge the frontend pull request and confirm GitHub Pages serves the new version.
+4. On an installed test device, verify offline entry, Sync All, and the green online indicator. Test a push announcement with a subscribed test device in a test OneSignal app before broadcasting to the production app.
+
+## Announcement push
+
+For the Median app, configure its OneSignal plugin and set the corresponding `ONESIGNAL_APP_ID` and `ONESIGNAL_API_KEY` in the private Apps Script Script Properties. Keep the API key out of GitHub. Browser-installed PWAs use a separate Web Push configuration.
