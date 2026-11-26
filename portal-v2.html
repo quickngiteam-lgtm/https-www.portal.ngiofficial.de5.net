@@ -3166,11 +3166,8 @@
           <div><strong>Last Login:</strong> ${memberObj.lastLogin ? ngxFmt(memberObj.lastLogin) : "Never"}</div>
         </div>
         <h3 style="margin-bottom: 10px;">Activity & Login History (${userLogs.length})</h3>
-        <div class="record-stream" style="margin-bottom: 16px;">
-          ${userLogs.length === 0
-            ? `<p style="color: var(--text-dim); font-size: 0.85rem;">No recent activity logs.</p>`
-            : userLogs.map(l => `<div class="feed-item"><strong>${l.action}</strong> (${l.section}) — ${l.summary} <div style="font-size: 0.72rem; color: var(--text-dim);">${ngxFmt(l.timestamp)}</div></div>`).join("")
-          }
+        <div style="margin-bottom: 16px;">
+          ${renderActivityFeedHtml(userLogs)}
         </div>
         <h3 style="margin-bottom: 10px;">Submitted Records (${memberRecords.length})</h3>
         <div class="record-stream">
@@ -3374,7 +3371,7 @@
             </div>
             <div style="font-size: 0.84rem; color: var(--text-dim); margin-top: 4px;">${ngxEsc(item.action)}: <strong style="color: #93C5FD;">${ngxEsc(item.summary)}</strong></div>
             <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px;">${ngxFmt(item.timestamp)}</div>
-            ${sessionUser?.role === "ADMIN" && item.activityKey ? `<button type="button" class="btn-danger btn-sm" data-delete-activity="${ngxEsc(item.activityKey)}">Delete</button>` : ""}
+            ${sessionUser?.role === "ADMIN" && item.activityKey ? `<button type="button" class="btn-danger btn-sm" data-delete-activity="${ngxEsc(item.activityKey)}" aria-label="Delete activity log">Delete</button>` : ""}
           </li>
         `).join("")}
       </ul>`;
