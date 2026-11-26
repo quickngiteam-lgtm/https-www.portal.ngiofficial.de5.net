@@ -139,7 +139,7 @@
       text-transform: uppercase;
     }
     .badge-pending { background: rgba(245, 158, 11, 0.15); color: var(--amber-glow); border: 1px solid rgba(245, 158, 11, 0.3); }
-    .badge-progress { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-progress { background: rgba(59, 130, 246, 0.15); color: var(--portal-detail-accent, #60A5FA); border: 1px solid rgba(59, 130, 246, 0.3); }
     .badge-completed { background: rgba(16, 185, 129, 0.15); color: var(--emerald-glow); border: 1px solid rgba(16, 185, 129, 0.3); }
     .badge-inactive { background: rgba(239, 68, 68, 0.15); color: var(--danger-red); border: 1px solid rgba(239, 68, 68, 0.3); }
 
@@ -232,7 +232,7 @@
     }
     .ngi-logo-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 5px; }
     .brand-header h1 { font-size: 1.55rem; font-weight: 800; color: var(--text-main); }
-    .brand-header p { color: #60A5FA; font-size: 0.88rem; font-weight: 700; margin-top: 3px; }
+    .brand-header p { color: var(--portal-detail-accent, #60A5FA); font-size: 0.88rem; font-weight: 700; margin-top: 3px; }
 
     .form-group { margin-bottom: 15px; }
     .form-group label {
@@ -366,7 +366,7 @@
       position: absolute;
       right: 12px;
       background: transparent;
-      color: #60A5FA;
+      color: var(--portal-detail-accent, #60A5FA);
       font-size: 0.78rem;
       font-weight: 800;
       text-transform: uppercase;
@@ -385,7 +385,7 @@
     }
     .info-msg {
       background: rgba(59, 130, 246, 0.14);
-      color: #93C5FD;
+      color: var(--portal-detail-accent, #93C5FD);
       border: 1px solid rgba(59, 130, 246, 0.35);
       padding: 11px 14px;
       border-radius: 12px;
@@ -955,7 +955,35 @@
       border: 1px solid rgba(255,255,255,.35);
       box-shadow: 0 6px 18px rgba(15,118,110,.20);
     }
-  </style>
+      #portalShell, #memberDetailModal {
+      --portal-detail-accent: #155E75;
+      --text-dim: #3E566E;
+    }
+    #portalShell #sideRole, #portalShell #welcomeMsg,
+    #portalShell .badge-progress, #memberDetailModal .badge-progress {
+      color: var(--portal-detail-accent) !important;
+    }
+    #portalShell .badge-pending, #memberDetailModal .badge-pending { color: #795100; }
+    #portalShell .badge-completed, #memberDetailModal .badge-completed { color: #146349; }
+    #portalShell .badge-inactive, #memberDetailModal .badge-inactive { color: #982D38; }
+    #memberDetailModal .modal-card {
+      --text-main: #173D70;
+      --surface-card: #FFFFFF;
+      background: #F4F8FC;
+      color: var(--text-main);
+    }
+    #memberDetailBody .panel, #memberDetailBody .feed-item, #memberDetailBody .record-ticket {
+      background: #FFFFFF;
+      color: var(--text-main);
+      border-color: #C4D7E7;
+    }
+    #memberDetailModal .ticket-body, #memberDetailModal .modal-header { color: var(--text-main); }
+    #memberDetailBody .btn-danger:disabled, #portalShell .feed-item .btn-danger:disabled {
+      opacity: 1;
+      color: #75323A;
+      background: #F8E8EA;
+    }
+</style>
   <script>
     (() => {
       const release = "ngi-review-push-v1";
@@ -1068,7 +1096,7 @@
           <img id="sideAvatar" class="avatar" src="" alt="Profile Picture" />
           <div style="overflow: hidden;">
             <div id="sideName" style="font-weight: 800; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
-            <div id="sideRole" style="font-size: 0.74rem; font-weight: 700; color: #60A5FA;"></div>
+            <div id="sideRole" style="font-size: 0.74rem; font-weight: 700; color: var(--portal-detail-accent, #60A5FA);"></div>
             <div id="sideId" style="font-size: 0.7rem; font-weight: 700; color: var(--text-dim); margin-top: 2px;"></div>
           </div>
         </div>
@@ -1092,7 +1120,7 @@
           </button>
           <div>
             <h1 id="portalTitle" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);"></h1>
-            <p id="welcomeMsg" style="font-size: 0.82rem; font-weight: 700; color: #60A5FA; margin-top: 2px;"></p>
+            <p id="welcomeMsg" style="font-size: 0.82rem; font-weight: 700; color: var(--portal-detail-accent, #60A5FA); margin-top: 2px;"></p>
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -2278,7 +2306,7 @@
                   </div>
                 </div>
                 <p style="font-size: 0.88rem; color: var(--text-dim); margin-bottom: 8px;">${n.content}</p>
-                <div style="font-size: 0.74rem; color: #60A5FA; font-weight: 700;">
+                <div style="font-size: 0.74rem; color: var(--portal-detail-accent, #60A5FA); font-weight: 700;">
                   Posted by ${n.authorName} • ${new Date(n.timestamp).toLocaleDateString()}${n.emailSentCount ? ` • Emailed ${n.emailSentCount} leader(s)` : ""}
                 </div>
               </div>
@@ -2546,7 +2574,7 @@
                     const val = rec[f.name];
                     if (!val) return "";
                     if (f.type === "url") {
-                      return `<div><strong>${f.label}:</strong> <a href="${val}" target="_blank" rel="noopener" style="color: #60A5FA; text-decoration: underline;">Open Link</a></div>`;
+                      return `<div><strong>${f.label}:</strong> <a href="${val}" target="_blank" rel="noopener" style="color: var(--portal-detail-accent, #60A5FA); text-decoration: underline;">Open Link</a></div>`;
                     }
                     if (f.type === "file" && /^https?:\/\//i.test(String(val))) {
                       return `<div style="margin-top:10px;"><strong>${f.label}:</strong><br><a href="${val}" target="_blank" rel="noopener"><img src="${val}" alt="Activity photo" style="max-width:220px;max-height:180px;object-fit:contain;border-radius:12px;margin-top:8px;border:1px solid var(--border-glow);"></a></div>`;
@@ -2801,7 +2829,7 @@
                       <img class="avatar" src="${pic}" alt="${m.fullName}" />
                       <div style="overflow: hidden;">
                         <h3 style="font-size: 1rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${m.fullName}</h3>
-                        <div style="font-size: 0.78rem; font-weight: 700; color: #60A5FA;">${m.position}</div>
+                        <div style="font-size: 0.78rem; font-weight: 700; color: var(--portal-detail-accent, #60A5FA);">${m.position}</div>
                         <div style="font-size: 0.72rem; color: var(--text-dim);">ID: ${m.memberId}</div>
                       </div>
                     </div>
@@ -3089,6 +3117,8 @@
       const memberObj = (dashboardCache.members || []).find(m => String(m.memberId).toLowerCase() === String(targetMemberId).toLowerCase()) || {};
       const userLogs = (dashboardCache.activityFeed || []).filter(f => String(f.memberId).toLowerCase() === String(targetMemberId).toLowerCase());
 
+      const memberAttendance = (dashboardCache.attendance || []).filter(entry =>
+        String(entry.memberId || "").toLowerCase() === String(targetMemberId).toLowerCase());
       const memberRecords = [];
       Object.entries(schema.sections).forEach(([secKey, secDef]) => {
         const rows = dashboardCache.records[secKey] || [];
@@ -3101,20 +3131,26 @@
 
       document.getElementById("memberDetailTitle").textContent = `${fullName} (${targetMemberId})`;
       document.getElementById("memberDetailBody").innerHTML = `
-        <div class="panel" style="background: #0B1126; margin-bottom: 14px;">
-          <div><strong>Position:</strong> ${memberObj.position || role}</div>
-          <div><strong>Status:</strong> ${memberObj.status || "Active"}</div>
-          <div><strong>Email:</strong> ${memberObj.email || "Not set"}</div>
+        <div class="panel" style="margin-bottom: 14px;">
+          <div><strong>Position:</strong> ${ngxEsc(memberObj.position || role)}</div>
+          <div><strong>Status:</strong> ${ngxEsc(memberObj.status || "Active")}</div>
+          <div><strong>Email:</strong> ${ngxEsc(memberObj.email || "Not set")}</div>
           <div><strong>Last Login:</strong> ${memberObj.lastLogin ? ngxFmt(memberObj.lastLogin) : "Never"}</div>
         </div>
+        <p style="color:var(--text-dim)">Delete becomes available after the Apps Script update.</p>
         <h3 style="margin-bottom: 10px;">Activity & Login History (${userLogs.length})</h3>
         <div class="record-stream" style="margin-bottom: 16px;">
-          ${userLogs.length === 0
-            ? `<p style="color: var(--text-dim); font-size: 0.85rem;">No recent activity logs.</p>`
-            : userLogs.map(l => `<div class="feed-item"><strong>${l.action}</strong> (${l.section}) — ${l.summary} <div style="font-size: 0.72rem; color: var(--text-dim);">${ngxFmt(l.timestamp)}</div></div>`).join("")
-          }
+          ${renderActivityFeedHtml(userLogs, true)}
         </div>
-        <h3 style="margin-bottom: 10px;">Submitted Records (${memberRecords.length})</h3>
+        <h3 style="margin: 14px 0 10px;">Attendance (${memberAttendance.length})</h3>
+        <div class="record-stream">
+          ${memberAttendance.map(entry => `<div class="record-ticket">
+            <div class="ticket-header"><strong>${ngxEsc(entry.date || "Date unavailable")}</strong><span>${ngxEsc(entry.status || "Recorded")}</span></div>
+            <div class="ticket-body">${ngxEsc(entry.location || "")}${entry.notes ? ` · ${ngxEsc(entry.notes)}` : ""}</div>
+            ${sessionUser?.role === "ADMIN" ? pendingHistoryDeleteButton() : ""}
+          </div>`).join("") || '<p>No attendance entries recorded yet.</p>'}
+        </div>
+        <h3 style="margin: 14px 0 10px;">Submitted Records (${memberRecords.length})</h3>
         <div class="record-stream">
           ${memberRecords.length === 0
             ? `<p style="color: var(--text-dim); font-size: 0.85rem;">No records submitted yet.</p>`
@@ -3122,14 +3158,19 @@
               <div class="record-ticket status-done">
                 <div class="ticket-header"><span class="badge badge-progress">${rec._sectionLabel}</span></div>
                 <div class="ticket-body">
-                  ${rec._fields.map(f => rec[f.name] ? `<div><strong>${f.label}:</strong> ${rec[f.name]}</div>` : "").join("")}
+                  ${rec._fields.map(f => rec[f.name] ? `<div><strong>${f.label}:</strong> ${ngxEsc(rec[f.name])}</div>` : "").join("")}
                 </div>
+                ${sessionUser?.role === "ADMIN" ? pendingHistoryDeleteButton() : ""}
               </div>
             `).join("")
           }
         </div>
       `;
       document.getElementById("memberDetailModal").style.display = "flex";
+    }
+
+    function pendingHistoryDeleteButton() {
+      return '<button type="button" class="btn-danger btn-sm" disabled>Delete</button>';
     }
 
     function openPublishNoticeModal() {
@@ -3228,7 +3269,7 @@
               <strong style="color: var(--text-main); font-size: 0.9rem;">${item.memberName} (${item.position})</strong>
               <span class="badge badge-progress">${item.section}</span>
             </div>
-            <div style="font-size: 0.84rem; color: var(--text-dim); margin-top: 4px;">${item.action}: <strong style="color: #93C5FD;">${item.summary}</strong></div>
+            <div style="font-size: 0.84rem; color: var(--text-dim); margin-top: 4px;">${item.action}: <strong style="color: var(--portal-detail-accent, #93C5FD);">${item.summary}</strong></div>
             <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px;">${ngxFmt(item.timestamp)}</div>
             ${showDelete && sessionUser?.role === "ADMIN" ? '<button type="button" class="btn-danger btn-sm" aria-label="Delete activity log, unavailable until Apps Script is updated" disabled>Delete</button>' : ""}
           </li>
