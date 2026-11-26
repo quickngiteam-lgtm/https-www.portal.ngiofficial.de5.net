@@ -2771,7 +2771,8 @@
             <h2>Recent Audit & Login Activity</h2>
             <button class="btn-primary btn-sm" onclick="exportAllCsv()">Export CSV</button>
           </div>
-          ${renderActivityFeedHtml(dashboardCache.activityFeed)}
+          ${renderActivityFeedHtml(dashboardCache.activityFeed, true)}
+          ${dashboardCache.activityFeed?.length ? '<p style="color:var(--text-dim);font-size:.8rem">Delete becomes available after the Apps Script update.</p>' : ""}
         </div>
       `;
     }
@@ -3218,7 +3219,7 @@
       }
     });
 
-    function renderActivityFeedHtml(feed) {
+    function renderActivityFeedHtml(feed, showDelete = false) {
       if (!feed || feed.length === 0) return `<p style="color: var(--text-dim);">No activity logs recorded yet.</p>`;
       return `<ul class="feed-list">
         ${feed.map(item => `
@@ -3229,6 +3230,7 @@
             </div>
             <div style="font-size: 0.84rem; color: var(--text-dim); margin-top: 4px;">${item.action}: <strong style="color: #93C5FD;">${item.summary}</strong></div>
             <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px;">${ngxFmt(item.timestamp)}</div>
+            ${showDelete && sessionUser?.role === "ADMIN" ? '<button type="button" class="btn-danger btn-sm" aria-label="Delete activity log, unavailable until Apps Script is updated" disabled>Delete</button>' : ""}
           </li>
         `).join("")}
       </ul>`;
