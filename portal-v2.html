@@ -983,6 +983,16 @@
       color: #75323A;
       background: #F8E8EA;
     }
+    #loaderOverlay { background: rgba(23, 61, 112, .28); }
+    #loaderOverlay .loader-box {
+      --text-main: #173D70;
+      background: #F4F8FC;
+      border-color: #C4D7E7;
+      box-shadow: 0 12px 30px rgba(23, 61, 112, .18);
+    }
+    #loaderOverlay .spinner { border-color: #DCE8F4; border-top-color: #0F8B8D; }
+    .audit-panel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .activity-selection { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
 </style>
   <script>
     if (localStorage.getItem("ngi_ready_backend_release") !== "ngi-review-push-v1") {
@@ -2770,7 +2780,7 @@
           <div class="panel">
             <div class="panel-header">
               <h2>Audit & Activity History</h2>
-              <button class="btn-primary btn-sm" onclick="exportAllCsv()">Export CSV</button>
+              <div class="audit-panel-actions"><button class="btn-primary btn-sm" onclick="exportAuditCsv()">Export CSV</button><button type="button" class="btn-danger btn-sm" data-audit-bulk="all">Delete All</button></div>
             </div>
             ${renderActivityFeedHtml(dashboardCache.activityFeed)}
           </div>
@@ -2814,7 +2824,7 @@
         <div class="panel">
           <div class="panel-header">
             <h2>Recent Audit & Login Activity</h2>
-            <button class="btn-primary btn-sm" onclick="exportAllCsv()">Export CSV</button>
+            <div class="audit-panel-actions"><button class="btn-primary btn-sm" onclick="exportAuditCsv()">Export CSV</button><button type="button" class="btn-danger btn-sm" data-audit-bulk="all">Delete All</button></div>
           </div>
           ${renderActivityFeedHtml(dashboardCache.activityFeed)}
         </div>
@@ -3196,8 +3206,9 @@
           <div><strong>Last Login:</strong> ${memberObj.lastLogin ? ngxFmt(memberObj.lastLogin) : "Never"}</div>
         </div>
         <h3 style="margin-bottom: 10px;">Activity & Login History (${userLogs.length})</h3>
-        <div style="margin-bottom: 16px;">
-          ${renderActivityFeedHtml(userLogs)}
+        <div style="margin-bottom: 16px;" data-audit-selection>
+          ${userLogs.length ? '<button type="button" class="btn-danger btn-sm" data-audit-bulk="selected" disabled>Delete Selected</button>' : ""}
+          ${renderActivityFeedHtml(userLogs, true)}
         </div>
         <h3 style="margin: 14px 0 10px;">Attendance (${memberAttendance.length})</h3>
         <div class="record-stream">
@@ -3404,7 +3415,56 @@
       }
     });
 
-    function renderActivityFeedHtml(feed) {
+    document.addEventListener("change", event => {
+      if (!event.target.matches("[data-audit-key]")) return;
+      const group = event.target.closest("[data-audit-selection]");
+      const button = group?.querySelector('[data-audit-bulk="selected"]');
+      if (button) button.disabled = !group.querySelector("[data-audit-key]:checked");
+    });
+
+    document.addEventListener("click", async event => {
+      const button = event.target.closest("[data-audit-bulk]");
+      if (!button || button.disabled || sessionUser?.role !== "ADMIN") return;
+      const all = button.dataset.auditBulk === "all";
+      const group = button.closest("[data-audit-selection]");
+      const keys = group ? [...group.querySelectorAll("[data-audit-key]:checked")].map(input => input.dataset.auditKey) : [];
+      if (!all && !keys.length) return;
+      const question = all
+        ? "Permanently delete all stored audit and login logs, including older logs outside this list?"
+        : `Permanently delete the ${keys.length} selected activity log(s)?`;
+      if (!confirm(question)) return;
+      button.disabled = true;
+      const result = await callApi({action: "adminDeleteActivityBatch", scope: all ? "all" : "selected", activityKeys: keys}, "Deleting activity logs...");
+      if (!result.success) {
+        button.disabled = false;
+        alert(result.message || "Could not delete activity logs.");
+        return;
+      }
+      const memberId = button.closest("#memberDetailModal")?.dataset.memberId;
+      await loadAndRender();
+      if (memberId && sessionUser?.role === "ADMIN") {
+        const member = (dashboardCache.members || []).find(item => item.memberId === memberId);
+        if (member) openMemberDetailView(member.memberId, member.fullName, member.role);
+      }
+    });
+
+    function exportAuditCsv() {
+      const columns = ["timestamp", "memberId", "memberName", "position", "section", "action", "summary"];
+      const cell = value => {
+        const text = String(value ?? "");
+        return '"' + (/^[=+@\-\t\r]/.test(text) ? "'" : "") + text.replace(/"/g, '""') + '"';
+      };
+      const rows = [columns, ...(dashboardCache.activityFeed || []).map(item => columns.map(column => item[column]))];
+      const file = new Blob([rows.map(row => row.map(cell).join(",")).join("\r\n")], {type: "text/csv;charset=utf-8"});
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "NGI_Audit_Log.csv";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function renderActivityFeedHtml(feed, selectable = false) {
       if (!feed || feed.length === 0) return `<p style="color: var(--text-dim);">No activity logs recorded yet.</p>`;
       return `<ul class="feed-list">
         ${feed.map(item => `
@@ -3415,6 +3475,7 @@
             </div>
             <div style="font-size: 0.84rem; color: var(--text-dim); margin-top: 4px;">${ngxEsc(item.action)}: <strong style="color: var(--portal-detail-accent, #93C5FD);">${ngxEsc(item.summary)}</strong></div>
             <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px;">${ngxFmt(item.timestamp)}</div>
+            ${selectable && sessionUser?.role === "ADMIN" && item.activityKey ? `<label class="activity-selection"><input type="checkbox" data-audit-key="${ngxEsc(item.activityKey)}">Select</label>` : ""}
             ${sessionUser?.role === "ADMIN" && item.activityKey ? `<button type="button" class="btn-danger btn-sm" data-delete-activity="${ngxEsc(item.activityKey)}" aria-label="Delete activity log">Delete</button>` : ""}
           </li>
         `).join("")}
