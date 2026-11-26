@@ -38,8 +38,13 @@
       .panel { min-width: 0; }
       .topbar { min-width: 0; }
     }
-    body { -webkit-user-select: none; user-select: none; }
-    input, textarea, [contenteditable] { -webkit-user-select: text; user-select: text; }
+    #portalShell { -webkit-user-select: none; user-select: none; }
+    #portalShell input, #portalShell textarea, #portalShell [contenteditable],
+    #loginForm input {
+      -webkit-user-select: text;
+      user-select: text;
+      -webkit-touch-callout: default;
+    }
     .spinner { border-top-color: var(--emerald-glow); }
     button.stat-card { font: inherit; text-align: inherit; cursor: pointer; }
   </style>
@@ -1056,12 +1061,12 @@
       <form id="loginForm" autocomplete="off">
         <div class="form-group">
           <label for="loginId">Unique Member ID</label>
-          <input id="loginId" type="text" placeholder="Enter your Member ID" autocomplete="off" required />
+          <input id="loginId" type="text" placeholder="Enter your Member ID" autocomplete="username" autocapitalize="none" spellcheck="false" required />
         </div>
         <div class="form-group">
           <label for="loginPass">Password</label>
           <div class="input-row">
-            <input id="loginPass" type="password" placeholder="Enter your password" autocomplete="new-password" required />
+            <input id="loginPass" type="password" placeholder="Enter your password" autocomplete="current-password" required />
             <button type="button" class="toggle-pass" id="togglePassBtn">Show</button>
           </div>
         </div>
