@@ -1474,13 +1474,26 @@
       } catch (e) {}
     }
 
+    async function forgetOfflineLogin(memberId) {
+      const profiles = (await idbGetMeta("offline_auth_profiles")) || {};
+      const key = String(memberId).trim().toLowerCase();
+      if (!Object.hasOwn(profiles, key)) return;
+      delete profiles[key];
+      await idbSaveMeta("offline_auth_profiles", profiles);
+    }
+
     async function verifyOfflineLogin(memberId, plainPassword) {
       try {
         const existingAuths = (await idbGetMeta("offline_auth_profiles")) || {};
         const entry = existingAuths[String(memberId).trim().toLowerCase()];
         if (!entry) return null;
+        const age = Date.now() - entry.updatedAt;
+        if (!Number.isFinite(age) || age < 0 || age >= SESSION_MAX_AGE_MS) {
+          await forgetOfflineLogin(memberId);
+          return null;
+        }
         const inputHash = await computeCredentialHash(memberId, plainPassword);
-        return inputHash === entry.credHash ? entry.user : null;
+        return inputHash === entry.credHash ? entry : null;
       } catch (e) {
         return null;
       }
@@ -1796,11 +1809,11 @@
       }
     }
 
-    function saveTabSession(userObj) {
+    function saveTabSession(userObj, loginAt = Date.now()) {
       sessionUser = userObj;
       localStorage.setItem(SESSION_KEY, JSON.stringify({
         user: userObj,
-        loginAt: Date.now()
+        loginAt
       }));
       setTimeout(() => { try { ngxRegisterPush(); } catch (e) {} }, 800);
     }
@@ -2005,9 +2018,9 @@
         }
       }
 
-      const offlineUser = await verifyOfflineLogin(memberId, password);
-      if (offlineUser && offlineUser.role !== "ADMIN") {
-        saveTabSession(offlineUser);
+      const offlineProfile = await verifyOfflineLogin(memberId, password);
+      if (offlineProfile && offlineProfile.user.role !== "ADMIN") {
+        saveTabSession(offlineProfile.user, offlineProfile.updatedAt);
         activeNav = "overview";
         await loadAndRender();
       } else {
@@ -2022,10 +2035,18 @@
     document.getElementById("openAdminLoginBtn").addEventListener("click", () => ngxOpenAdmin());
     document.getElementById("closeAdminAuthModal").addEventListener("click", () => closeModal("adminAuthModal"));
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
       const u = sessionUser;
       if (u && u.token) fetch(API_URL, { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(u.role === "ADMIN" ? { action: "adminLogout", deviceId: u.deviceId || "", adminToken: u.token, token: u.token } : { action: "userLogout", memberId: u.memberId, memberSessionToken: u.token, token: u.token }) }).catch(() => {});
       clearTabSession("You have been securely logged out.");
+      if (u && u.role !== "ADMIN") {
+        try {
+          await forgetOfflineLogin(u.memberId);
+        } catch (e) {
+          const notice = document.getElementById("sessionNotice");
+          notice.textContent = "Logged out. This browser could not remove the saved offline login.";
+        }
+      }
     });
     document.getElementById("refreshDataBtn").addEventListener("click", () => {
       closeSidebar();
