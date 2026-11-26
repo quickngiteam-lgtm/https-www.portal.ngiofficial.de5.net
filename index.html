@@ -983,6 +983,16 @@
       color: #75323A;
       background: #F8E8EA;
     }
+    #loaderOverlay { background: rgba(23, 61, 112, .28); }
+    #loaderOverlay .loader-box {
+      --text-main: #173D70;
+      background: #F4F8FC;
+      border-color: #C4D7E7;
+      box-shadow: 0 12px 30px rgba(23, 61, 112, .18);
+    }
+    #loaderOverlay .spinner { border-color: #DCE8F4; border-top-color: #0F8B8D; }
+    .audit-panel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .activity-selection { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
 </style>
   <script>
     (() => {
@@ -2754,9 +2764,9 @@
           <div class="panel">
             <div class="panel-header">
               <h2>Audit & Activity History</h2>
-              <button class="btn-primary btn-sm" onclick="exportAllCsv()">Export CSV</button>
+              <div class="audit-panel-actions"><button class="btn-primary btn-sm" onclick="exportAuditCsv()">Export CSV</button><button type="button" class="btn-danger btn-sm" disabled>Delete All</button></div>
             </div>
-            ${renderActivityFeedHtml(dashboardCache.activityFeed)}
+            ${renderActivityFeedHtml(dashboardCache.activityFeed, true)}
           </div>
         `;
         return;
@@ -2797,7 +2807,7 @@
         <div class="panel">
           <div class="panel-header">
             <h2>Recent Audit & Login Activity</h2>
-            <button class="btn-primary btn-sm" onclick="exportAllCsv()">Export CSV</button>
+            <div class="audit-panel-actions"><button class="btn-primary btn-sm" onclick="exportAuditCsv()">Export CSV</button><button type="button" class="btn-danger btn-sm" disabled>Delete All</button></div>
           </div>
           ${renderActivityFeedHtml(dashboardCache.activityFeed, true)}
           ${dashboardCache.activityFeed?.length ? '<p style="color:var(--text-dim);font-size:.8rem">Delete becomes available after the Apps Script update.</p>' : ""}
@@ -3140,6 +3150,7 @@
         <p style="color:var(--text-dim)">Delete becomes available after the Apps Script update.</p>
         <h3 style="margin-bottom: 10px;">Activity & Login History (${userLogs.length})</h3>
         <div class="record-stream" style="margin-bottom: 16px;">
+          ${userLogs.length ? '<button type="button" class="btn-danger btn-sm" disabled>Delete Selected</button>' : ""}
           ${renderActivityFeedHtml(userLogs, true)}
         </div>
         <h3 style="margin: 14px 0 10px;">Attendance (${memberAttendance.length})</h3>
@@ -3259,6 +3270,22 @@
         await loadAndRender();
       }
     });
+
+    function exportAuditCsv() {
+      const columns = ["timestamp", "memberId", "memberName", "position", "section", "action", "summary"];
+      const cell = value => {
+        const text = String(value ?? "");
+        return '"' + (/^[=+@\-\t\r]/.test(text) ? "'" : "") + text.replace(/"/g, '""') + '"';
+      };
+      const rows = [columns, ...(dashboardCache.activityFeed || []).map(item => columns.map(column => item[column]))];
+      const file = new Blob([rows.map(row => row.map(cell).join(",")).join("\r\n")], {type: "text/csv;charset=utf-8"});
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "NGI_Audit_Log.csv";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
 
     function renderActivityFeedHtml(feed, showDelete = false) {
       if (!feed || feed.length === 0) return `<p style="color: var(--text-dim);">No activity logs recorded yet.</p>`;
