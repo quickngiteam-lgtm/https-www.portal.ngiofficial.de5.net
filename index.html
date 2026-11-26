@@ -993,6 +993,15 @@
     #loaderOverlay .spinner { border-color: #DCE8F4; border-top-color: #0F8B8D; }
     .audit-panel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .activity-selection { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
+    #portalShell .form-group select, #portalShell .form-group select option,
+    #portalShell .form-group input:not([type="checkbox"]):not([type="file"]),
+    #portalShell .form-group textarea {
+      color: #173D70;
+      background: #FFFFFF;
+      border-color: #AFC6DA;
+      color-scheme: light;
+    }
+    #portalShell .form-group label, #portalShell .form-group small { color: #3E566E; }
 </style>
   <script>
     (() => {
@@ -3148,7 +3157,10 @@
           <div><strong>Last Login:</strong> ${memberObj.lastLogin ? ngxFmt(memberObj.lastLogin) : "Never"}</div>
         </div>
         <p style="color:var(--text-dim)">Delete becomes available after the Apps Script update.</p>
-        <h3 style="margin-bottom: 10px;">Activity & Login History (${userLogs.length})</h3>
+        <div class="panel-header">
+          <h3>Activity & Login History (${userLogs.length})</h3>
+          <button type="button" class="btn-danger btn-sm" disabled>Delete All</button>
+        </div>
         <div class="record-stream" style="margin-bottom: 16px;">
           ${userLogs.length ? '<button type="button" class="btn-danger btn-sm" disabled>Delete Selected</button>' : ""}
           ${renderActivityFeedHtml(userLogs, true)}

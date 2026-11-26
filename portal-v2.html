@@ -993,6 +993,15 @@
     #loaderOverlay .spinner { border-color: #DCE8F4; border-top-color: #0F8B8D; }
     .audit-panel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .activity-selection { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
+    #portalShell .form-group select, #portalShell .form-group select option,
+    #portalShell .form-group input:not([type="checkbox"]):not([type="file"]),
+    #portalShell .form-group textarea {
+      color: #173D70;
+      background: #FFFFFF;
+      border-color: #AFC6DA;
+      color-scheme: light;
+    }
+    #portalShell .form-group label, #portalShell .form-group small { color: #3E566E; }
 </style>
   <script>
     if (localStorage.getItem("ngi_ready_backend_release") !== "ngi-review-push-v1") {
@@ -3205,7 +3214,10 @@
           <div><strong>Email:</strong> ${ngxEsc(memberObj.email || "Not set")}</div>
           <div><strong>Last Login:</strong> ${memberObj.lastLogin ? ngxFmt(memberObj.lastLogin) : "Never"}</div>
         </div>
-        <h3 style="margin-bottom: 10px;">Activity & Login History (${userLogs.length})</h3>
+        <div class="panel-header">
+          <h3>Activity & Login History (${userLogs.length})</h3>
+          <button type="button" class="btn-danger btn-sm" data-audit-bulk="member">Delete All</button>
+        </div>
         <div style="margin-bottom: 16px;" data-audit-selection>
           ${userLogs.length ? '<button type="button" class="btn-danger btn-sm" data-audit-bulk="selected" disabled>Delete Selected</button>' : ""}
           ${renderActivityFeedHtml(userLogs, true)}
@@ -3425,22 +3437,24 @@
     document.addEventListener("click", async event => {
       const button = event.target.closest("[data-audit-bulk]");
       if (!button || button.disabled || sessionUser?.role !== "ADMIN") return;
-      const all = button.dataset.auditBulk === "all";
+      const scope = button.dataset.auditBulk;
+      const memberId = button.closest("#memberDetailModal")?.dataset.memberId;
       const group = button.closest("[data-audit-selection]");
       const keys = group ? [...group.querySelectorAll("[data-audit-key]:checked")].map(input => input.dataset.auditKey) : [];
-      if (!all && !keys.length) return;
-      const question = all
+      if ((scope === "selected" && !keys.length) || (scope === "member" && !memberId)) return;
+      const question = scope === "all"
         ? "Permanently delete all stored audit and login logs, including older logs outside this list?"
-        : `Permanently delete the ${keys.length} selected activity log(s)?`;
+        : scope === "member"
+          ? "Permanently delete all audit and login logs for this member, including older logs outside this list?"
+          : `Permanently delete the ${keys.length} selected activity log(s)?`;
       if (!confirm(question)) return;
       button.disabled = true;
-      const result = await callApi({action: "adminDeleteActivityBatch", scope: all ? "all" : "selected", activityKeys: keys}, "Deleting activity logs...");
+      const result = await callApi({action: "adminDeleteActivityBatch", scope, memberId, activityKeys: keys}, "Deleting activity logs...");
       if (!result.success) {
         button.disabled = false;
         alert(result.message || "Could not delete activity logs.");
         return;
       }
-      const memberId = button.closest("#memberDetailModal")?.dataset.memberId;
       await loadAndRender();
       if (memberId && sessionUser?.role === "ADMIN") {
         const member = (dashboardCache.members || []).find(item => item.memberId === memberId);
