@@ -1368,8 +1368,11 @@
     const API_URL = "https://script.google.com/macros/s/AKfycby5LnAXTM3zjVtaON1vBeTI4Qm9-ZvmQ3wlSNPyF3SkGMmoahT2UJzp04i4II2Xxmp6/exec";
     const NGI_LOGO_URL = "https://drive.google.com/thumbnail?id=1Mj8oSLt9hYZS3qJgSXMsxz1IWlkZumQ6&sz=w1000";
 
+    // Inactivity-based local timeout. The server must also enforce this after Code.gs is updated.
+    const SESSION_IDLE_LIMIT_MS = 10 * 60 * 1000;
     const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000;
     const SESSION_KEY = "ngi_tab_session_v3";
+    const SESSION_ACTIVITY_THROTTLE_MS = 15 * 1000;
 
     localStorage.removeItem("ngi_user_session");
     sessionStorage.removeItem("ngi_user_session");
@@ -1781,11 +1784,12 @@
         const raw = localStorage.getItem(SESSION_KEY);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
-        if (!parsed || !parsed.user || !parsed.loginAt) {
-          localStorage.removeItem(SESSION_KEY);
-          return null;
-        }
-        if (Date.now() - parsed.loginAt > SESSION_MAX_AGE_MS) {
+        const now = Date.now();
+        if (!parsed || !parsed.user || !Number.isFinite(parsed.loginAt) ||
+            !Number.isFinite(parsed.lastActivityAt) ||
+            parsed.loginAt > now || parsed.lastActivityAt > now ||
+            now - parsed.loginAt >= SESSION_MAX_AGE_MS ||
+            now - parsed.lastActivityAt >= SESSION_IDLE_LIMIT_MS) {
           localStorage.removeItem(SESSION_KEY);
           return null;
         }
@@ -1796,16 +1800,75 @@
       }
     }
 
-    function saveTabSession(userObj) {
+    function saveTabSession(userObj, preserveTimestamps = false) {
+      const now = Date.now();
+      let prior = null;
+      if (preserveTimestamps) {
+        try { prior = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) {}
+      }
       sessionUser = userObj;
       localStorage.setItem(SESSION_KEY, JSON.stringify({
         user: userObj,
-        loginAt: Date.now()
+        loginAt: prior && Number.isFinite(prior.loginAt) ? prior.loginAt : now,
+        lastActivityAt: prior && Number.isFinite(prior.lastActivityAt) ? prior.lastActivityAt : now
       }));
-      setTimeout(() => { try { ngxRegisterPush(); } catch (e) {} }, 800);
+      if (!preserveTimestamps) setTimeout(() => { try { ngxRegisterPush(); } catch (e) {} }, 800);
     }
 
+    function sendServerLogout(user) {
+      if (!user || !user.token || !navigator.onLine) return;
+      const request = user.role === "ADMIN"
+        ? { action: "adminLogout", deviceId: user.deviceId || "", adminToken: user.token, token: user.token }
+        : { action: "userLogout", memberId: user.memberId, memberSessionToken: user.token, token: user.token };
+      fetch(API_URL, {
+        method: "POST",
+        keepalive: true,
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(request)
+      }).catch(() => {});
+    }
+
+    function expireInactiveSession() {
+      if (!sessionUser) return;
+      const valid = getValidTabSession();
+      if (!valid) clearTabSession("Session expired after 10 minutes of inactivity. Please sign in again.");
+    }
+
+    function recordSessionActivity() {
+      if (!sessionUser) return;
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return expireInactiveSession();
+      let stored;
+      try { stored = JSON.parse(raw); } catch (e) { return expireInactiveSession(); }
+      const now = Date.now();
+      const last = stored && stored.lastActivityAt;
+      if (!Number.isFinite(last) || !Number.isFinite(stored.loginAt) ||
+          now - last >= SESSION_IDLE_LIMIT_MS || now - stored.loginAt >= SESSION_MAX_AGE_MS ||
+          last > now || stored.loginAt > now) return expireInactiveSession();
+      if (now - last < SESSION_ACTIVITY_THROTTLE_MS) return;
+      stored.lastActivityAt = now;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(stored));
+    }
+
+    document.addEventListener("pointerdown", recordSessionActivity, { passive: true });
+    document.addEventListener("keydown", recordSessionActivity);
+    document.addEventListener("touchstart", recordSessionActivity, { passive: true });
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) expireInactiveSession();
+    });
+    window.addEventListener("focus", expireInactiveSession);
+    window.addEventListener("pageshow", expireInactiveSession);
+    window.addEventListener("storage", e => {
+      if (e.key === SESSION_KEY && !e.newValue && sessionUser) {
+        clearTabSession("Session ended in another tab. Please sign in again.");
+      }
+    });
+    setInterval(expireInactiveSession, 10000);
+
     function clearTabSession(noticeMsg = "") {
+      const previousUser = sessionUser;
+      // Do not keep an authenticated session in memory after its local expiration.
+      sendServerLogout(previousUser);
       closeSidebar();
       document.getElementById("lockdownScreen").style.display = "none";
       sessionUser = null;
@@ -2023,9 +2086,7 @@
     document.getElementById("closeAdminAuthModal").addEventListener("click", () => closeModal("adminAuthModal"));
 
     document.getElementById("logoutBtn").addEventListener("click", () => {
-      const u = sessionUser;
-      if (u && u.token) fetch(API_URL, { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(u.role === "ADMIN" ? { action: "adminLogout", deviceId: u.deviceId || "", adminToken: u.token, token: u.token } : { action: "userLogout", memberId: u.memberId, memberSessionToken: u.token, token: u.token }) }).catch(() => {});
-      clearTabSession("You have been securely logged out.");
+      clearTabSession("You have been logged out.");
     });
     document.getElementById("refreshDataBtn").addEventListener("click", () => {
       closeSidebar();
@@ -2118,7 +2179,7 @@
             sessionUser.role = freshProfile.role;
             sessionUser.avatar = freshProfile.avatar || sessionUser.avatar;
             sessionUser.email = freshProfile.email || sessionUser.email;
-            saveTabSession(sessionUser);
+            saveTabSession(sessionUser, true);
           }
           await idbSaveMeta(`cached_dashboard_${sessionUser.memberId}`, res.data);
         } else {
@@ -3509,7 +3570,9 @@
     async function ngxApi(payload) {
       try {
         const r = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ memberId: (sessionUser && sessionUser.memberId) || "", memberSessionToken: (sessionUser && sessionUser.role !== "ADMIN" && sessionUser.token) || "", token: (sessionUser && sessionUser.token) || "", adminToken: (sessionUser && sessionUser.role === "ADMIN" && sessionUser.token) || "", deviceId: (sessionUser && sessionUser.deviceId) || "" }, payload)) });
-        return await r.json();
+        const data = await r.json();
+        if (data && data.authExpired) clearTabSession(data.message || "Session expired. Please sign in again.");
+        return data;
       } catch (e) { return { success: false, offline: true, message: "Network error. Check your connection." }; }
     }
     function ngxDeviceName() { const u = navigator.userAgent || ""; return (/Android/i.test(u) ? "Android" : /iPhone|iPad/i.test(u) ? "iOS" : "Desktop") + " device"; }
