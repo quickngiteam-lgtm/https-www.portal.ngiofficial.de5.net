@@ -1,5 +1,5 @@
-const CACHE = "ngi-shell-v3";
-const SHELL = ["./", "index.html", "manifest.json", "icons/app-icon-192.png", "icons/app-icon-512.png"];
+const CACHE = "ngi-shell-v4";
+const SHELL = ["./", "index.html", "portal-v2.html", "manifest.json", "icons/app-icon-192.png", "icons/app-icon-512.png"];
 const SHELL_URLS = new Set(SHELL.map(path => new URL(path, self.registration.scope).href));
 
 self.addEventListener("install", event => {
