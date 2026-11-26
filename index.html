@@ -38,6 +38,10 @@
       .panel { min-width: 0; }
       .topbar { min-width: 0; }
     }
+    body { -webkit-user-select: none; user-select: none; }
+    input, textarea, [contenteditable] { -webkit-user-select: text; user-select: text; }
+    .spinner { border-top-color: var(--emerald-glow); }
+    button.stat-card { font: inherit; text-align: inherit; cursor: pointer; }
   </style>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -275,9 +279,9 @@
       padding: clamp(26px, 5vw, 38px) clamp(22px, 4.5vw, 34px) 30px;
       border: 2px solid #173D70;
       border-radius: 26px;
-      background: #F8FAFC;
-      -webkit-backdrop-filter: blur(16px);
-      backdrop-filter: blur(16px);
+      background: linear-gradient(145deg, rgba(248,250,252,.94), rgba(219,234,254,.76));
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      backdrop-filter: blur(20px) saturate(140%);
       box-shadow: 0 24px 70px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.12);
     }
     #loginView .auth-card::before {
@@ -1026,7 +1030,7 @@
       <div class="sidebar-top">
         <div class="sidebar-brand-row">
           <div class="sidebar-brand">
-            <img class="side-logo-img" src="icons/app-icon-192.png?v=13" alt="NGI Logo" />
+            <img class="side-logo-img" src="https://drive.google.com/thumbnail?id=1Mj8oSLt9hYZS3qJgSXMsxz1IWlkZumQ6&amp;sz=w1000" alt="NGI Official Logo" />
             <span>NGI Portal</span>
           </div>
           <button type="button" class="close-sidebar-btn" id="closeSidebarBtn" title="Close Menu">&times;</button>
@@ -1906,57 +1910,8 @@
       }
     }
 
-    let isAutoSyncRunning = false;
-    async function runBackgroundAutoSync() {
-      if (!navigator.onLine || isAutoSyncRunning) return;
-      const validUser = getValidTabSession();
-      if (!validUser) return;
-      const pendingItems = await idbGetAllPendingRecords(validUser.memberId);
-      if (!pendingItems || pendingItems.length === 0) return;
-
-      isAutoSyncRunning = true;
-      try {
-        let syncedCount = 0;
-        for (let i = 0; i < pendingItems.length; i++) {
-          const item = pendingItems[i];
-          const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-              token: validUser.token,
-              memberSessionToken: validUser.token,
-              action: "saveRecord",
-              memberId: item.memberId,
-              role: validUser.role,
-              section: item.section,
-              recordId: item.recordId,
-              isOfflineNew: Boolean(item.isOfflineNew),
-              createdAt: item.createdAt,
-              fields: item.fields
-            })
-          });
-          const resData = await response.json();
-          if (resData && resData.success === true) {
-            await idbDeletePendingRecord(item.recordId);
-            syncedCount++;
-          } else if (resData && resData.authExpired) {
-            clearTabSession("Session expired. Please sign in again to sync offline records.");
-            break;
-          }
-        }
-        if (syncedCount > 0) {
-          await refreshPendingCache();
-          await loadAndRender();
-        }
-      } catch (e) {} finally {
-        isAutoSyncRunning = false;
-      }
-    }
-
-    window.addEventListener("online", () => {
-      updateConnectivityUI();
-      runBackgroundAutoSync();
-    });
+    let isManualSyncRunning = false;
+    window.addEventListener("online", updateConnectivityUI);
     window.addEventListener("offline", updateConnectivityUI);
 
     function openSidebar() {
@@ -2095,33 +2050,48 @@
       if (!validUser) return clearTabSession("Session expired. Sign in again to sync offline records.");
       if (!navigator.onLine) return alert("Currently offline. Connect to the internet and press Sync again.");
 
-      const pendingItems = await idbGetAllPendingRecords(sessionUser.memberId);
+      if (isManualSyncRunning) return;
+      isManualSyncRunning = true;
       let syncedCount = 0;
-      for (let i = 0; i < pendingItems.length; i++) {
-        const item = pendingItems[i];
-        const resData = await callApi({
-          action: "saveRecord",
-          token: validUser.token,
-          memberSessionToken: validUser.token,
-          memberId: item.memberId,
-          role: validUser.role,
-          section: item.section,
-          recordId: item.recordId,
-          isOfflineNew: Boolean(item.isOfflineNew),
-          createdAt: item.createdAt,
-          fields: item.fields
-        }, `Syncing ${i + 1}/${pendingItems.length}...`, true);
-        if (resData && resData.success === true) {
-          await idbDeletePendingRecord(item.recordId);
-          syncedCount++;
-        } else if (resData && resData.authExpired) {
-          clearTabSession("Session expired. Please sign in again to sync offline records.");
-          break;
+      const failures = new Map();
+      try {
+        const pendingItems = await idbGetAllPendingRecords(validUser.memberId);
+        for (let i = 0; i < pendingItems.length; i++) {
+          const item = pendingItems[i];
+          const resData = await callApi({
+            action: item.kind === "attendance" ? (item.isOfflineNew ? "markAttendance" : "updateOwnAttendance") : item.isOfflineNew ? "saveRecord" : "updateOwnRecord",
+            ...(item.kind === "attendance" ? {...item.fields, attendanceId: item.recordId} : {}),
+            token: validUser.token,
+            memberSessionToken: validUser.token,
+            memberId: item.memberId,
+            role: validUser.role,
+            section: item.section,
+            recordId: item.recordId,
+            isOfflineNew: Boolean(item.isOfflineNew),
+            createdAt: item.createdAt,
+            fields: item.fields
+          }, `Syncing ${i + 1}/${pendingItems.length}...`, true);
+          if (resData && resData.success === true) {
+            await idbDeletePendingRecord(item.recordId);
+            syncedCount++;
+          } else if (resData && resData.authExpired) {
+            clearTabSession("Session expired. Please sign in again to sync offline records.");
+            failures.set("Sign in again to continue syncing.", pendingItems.length - i);
+            break;
+          } else {
+            const reason = resData?.offline ? "Connection interrupted." : resData?.message || "The server did not accept the entry.";
+            failures.set(reason, (failures.get(reason) || 0) + 1);
+          }
         }
+        await refreshPendingCache();
+        await loadAndRender();
+        const details = [...failures].map(([reason, count]) => `${count} · ${reason}`);
+        alert([`Synced: ${syncedCount}. Still on this device: ${pendingItems.length - syncedCount}.`, ...details].join("\n"));
+      } catch (error) {
+        alert("Sync stopped before all entries were sent. Check device storage and try again.");
+      } finally {
+        isManualSyncRunning = false;
       }
-      await refreshPendingCache();
-      await loadAndRender();
-      alert(`Sync Complete: ${syncedCount} offline record(s) uploaded and all portal data refreshed.`);
     }
 
     document.getElementById("topManualSyncBtn").addEventListener("click", triggerManualSync);
@@ -2255,7 +2225,7 @@
       const all = [];
 
       pendingQueueCache.forEach((p) => {
-        if (String(p.memberId).toLowerCase() === String(memberId).toLowerCase() && schema.sections[p.section]) {
+        if (String(p.memberId).toLowerCase() === String(memberId).toLowerCase() && schema.sections[p.section] && memberCanEdit(p.createdAt)) {
           all.push({
             ...p.fields,
             RecordID: p.recordId,
@@ -2273,7 +2243,7 @@
       Object.keys(schema.sections).forEach((secKey) => {
         const rows = dashboardCache.records[secKey] || [];
         rows.forEach((r) => {
-          if (String(r.MemberID).toLowerCase() === String(memberId).toLowerCase() && !pendingIds.has(r.RecordID)) {
+          if (String(r.MemberID).toLowerCase() === String(memberId).toLowerCase() && !pendingIds.has(r.RecordID) && memberCanEdit(r.CreatedAt)) {
             all.push({
               ...r,
               _sectionKey: secKey,
@@ -2286,6 +2256,19 @@
 
       return all;
     }
+
+    function memberCanEdit(createdAt) {
+      const age = Date.now() - new Date(createdAt || 0).getTime();
+      return age >= 0 && age < 600000;
+    }
+
+    setInterval(() => {
+      if (sessionUser?.role === "ADMIN" || !sessionUser) return;
+      const container = document.getElementById("dashboardContent") || document;
+      container.querySelectorAll("[data-member-edit-until]").forEach(element => {
+        if (!memberCanEdit(element.dataset.memberEditUntil)) element.remove();
+      });
+    }, 1000);
 
     function renderNoticeBoardHtml(canManage) {
       const notices = dashboardCache.notices || [];
@@ -2585,7 +2568,7 @@
                   }).join("");
 
                   return `
-                    <div class="record-ticket ${isDone && !rec._isOfflinePending ? "status-done" : "status-wait"}">
+                    <div data-member-edit-until="${ngxEsc(rec.CreatedAt)}" class="record-ticket ${isDone && !rec._isOfflinePending ? "status-done" : "status-wait"}">
                       <div class="ticket-header">
                         <span class="badge badge-progress">${rec._sectionLabel}</span>
                         <span class="badge ${rec._isOfflinePending ? "badge-pending" : (isDone ? "badge-completed" : "badge-pending")}">
@@ -2670,6 +2653,7 @@
         ["admin_users", "Users & Access Control"],
         ["admin_apps", "Applications Tracker"],
         ["admin_attendance", "Attendance Records"],
+        ["admin_review", "Pending Approvals"],
         ["admin_complaints", "Complaints & Support"],
         ["admin_notices", "Notices & Email Alerts"],
         ["admin_email", "Send Email"],
@@ -2692,13 +2676,13 @@
       });
 
       const nonAdminUsers = (dashboardCache.members || []).filter(m => m.role !== "ADMIN");
-      const activeUsersCount = nonAdminUsers.filter(m => m.status === "Active").length;
       const inactiveUsersCount = nonAdminUsers.filter(m => m.status === "Inactive").length;
       const suspendedUsersCount = nonAdminUsers.filter(m => m.status === "Suspended").length;
-      const onlineUsersCount = nonAdminUsers.filter(m => m.isOnline).length;
+      const onlineUsersCount = navigator.onLine ? nonAdminUsers.filter(m => m.isOnline).length : 0;
 
       const apps = dashboardCache.applications || [];
-      const pendingAppsCount = apps.filter(a => a.status === "Pending").length;
+      const pendingEntriesCount = Object.values(dashboardCache.records || {}).flat()
+        .concat(dashboardCache.attendance || []).filter(item => item.ApprovalStatus === "Pending").length;
       const rejectedAppsCount = apps.filter(a => a.status === "Rejected").length;
 
       const todayStr = new Date().toISOString().slice(0, 10);
@@ -2718,6 +2702,10 @@
       if (activeNav === "admin_apps") {
         container.innerHTML = renderAdminApplicationsPanel(apps);
         bindAdminAppForm();
+        return;
+      }
+      if (activeNav === "admin_review") {
+        container.innerHTML = renderAdminReviewQueue();
         return;
       }
       if (activeNav === "admin_attendance") {
@@ -2760,16 +2748,16 @@
       // Main Admin Overview
       container.innerHTML = `
         <div class="stats-grid">
-          <div class="stat-card"><h3>Registered Users</h3><div class="val">${nonAdminUsers.length}</div></div>
-          <div class="stat-card"><h3>Active Users</h3><div class="val" style="color: var(--emerald-glow);">${activeUsersCount}</div></div>
-          <div class="stat-card"><h3>Inactive Users</h3><div class="val" style="color: var(--text-dim);">${inactiveUsersCount}</div></div>
-          <div class="stat-card"><h3>Online Now</h3><div class="val" style="color: #60A5FA;">${onlineUsersCount}</div></div>
-          <div class="stat-card"><h3>Total Leaders</h3><div class="val">${nonAdminUsers.length}</div></div>
-          <div class="stat-card"><h3>Pending Approvals</h3><div class="val" style="color: var(--amber-glow);">${pendingAppsCount}</div></div>
-          <div class="stat-card"><h3>Suspended</h3><div class="val" style="color: var(--danger-red);">${suspendedUsersCount}</div></div>
-          <div class="stat-card"><h3>Total Applications</h3><div class="val">${apps.length}</div></div>
-          <div class="stat-card"><h3>Today Registrations</h3><div class="val">${todayRegsCount}</div></div>
-          <div class="stat-card"><h3>Today Complaints</h3><div class="val" style="color: var(--amber-glow);">${todayComplaintsCount}</div></div>
+          <button type="button" class="stat-card" data-dashboard-nav="admin_users"><h3>Registered Users</h3><div class="val">${nonAdminUsers.length}</div></button>
+          <button type="button" class="stat-card" data-dashboard-nav="admin_users"><h3>Inactive Users</h3><div class="val" style="color: var(--text-dim);">${inactiveUsersCount}</div></button>
+          <button type="button" class="stat-card" data-dashboard-nav="admin_users"><h3>Online Now</h3><div class="val" style="color: #60A5FA;" data-online-count>${onlineUsersCount}</div></button>
+          <button type="button" class="stat-card" data-dashboard-nav="admin_users"><h3>Total Leaders</h3><div class="val">${nonAdminUsers.length}</div></button>
+          <button type="button" class="stat-card" data-dashboard-nav="admin_attendance"><h3>Attendance</h3><div class="val">${(dashboardCache.attendance || []).filter(entry => entry.ApprovalStatus !== "Pending").length}</div></button>
+          <button type="button" class="stat-card" data-dashboard-nav="admin_review"><h3>Pending Approvals</h3><div class="val" style="color: var(--amber-glow);">${pendingEntriesCount}</div></button>
+          <button type="button" class="stat-card" data-dashboard-nav="admin_users"><h3>Suspended</h3><div class="val" style="color: var(--danger-red);">${suspendedUsersCount}</div></button>
+          <button type="button" class="stat-card" data-dashboard-nav="admin_apps"><h3>Total Applications</h3><div class="val">${apps.length}</div></button>
+          <button type="button" class="stat-card" data-dashboard-nav="admin_apps"><h3>Today Registrations</h3><div class="val">${todayRegsCount}</div></button>
+          <button type="button" class="stat-card" data-dashboard-nav="admin_complaints"><h3>Today Complaints</h3><div class="val" style="color: var(--amber-glow);">${todayComplaintsCount}</div></button>
         </div>
 
         <div class="status-strip">
@@ -2781,7 +2769,7 @@
 
         <div class="panel">
           <div class="panel-header">
-            <h2>Quick Application Summary (Pending: ${pendingAppsCount} • Rejected: ${rejectedAppsCount})</h2>
+            <h2>Quick Application Summary (Pending: ${pendingEntriesCount} • Rejected: ${rejectedAppsCount})</h2>
             <button type="button" class="btn-primary btn-sm" onclick="activeNav='admin_apps'; renderAdminDashboard();">Manage Applications</button>
           </div>
           <p style="font-size: 0.86rem; color: var(--text-dim);">Open complaints requiring attention: <strong style="color: var(--amber-glow);">${openComplaintsCount}</strong></p>
@@ -2800,6 +2788,52 @@
       `;
     }
 
+    let presenceRequestPending = false;
+
+    function paintMemberPresence(ids) {
+      const online = new Set(ids);
+      document.querySelectorAll("[data-online-member]").forEach(mark => {
+        mark.hidden = !online.has(mark.dataset.onlineMember);
+      });
+      const count = document.querySelector("[data-online-count]");
+      if (count) count.textContent = online.size;
+    }
+
+    async function refreshMemberPresence() {
+      const user = sessionUser;
+      if (!navigator.onLine) return paintMemberPresence([]);
+      if (!user?.token || document.hidden || presenceRequestPending) return;
+      const admin = user.role === "ADMIN";
+      presenceRequestPending = true;
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {"Content-Type": "text/plain;charset=utf-8"},
+          body: JSON.stringify({
+            action: admin ? "adminMemberPresence" : "memberPresencePing",
+            memberId: user.memberId, deviceId: user.deviceId, token: user.token
+          })
+        });
+        const result = await response.json();
+        if (!admin || user !== sessionUser) return;
+        const ids = navigator.onLine && result.success && Array.isArray(result.onlineMemberIds) ? result.onlineMemberIds : [];
+        const online = new Set(ids);
+        (dashboardCache.members || []).forEach(member => {
+          member.isOnline = online.has(String(member.memberId).trim().toLowerCase());
+        });
+        paintMemberPresence(ids);
+      } catch (error) {
+        if (admin && user === sessionUser) paintMemberPresence([]);
+      } finally {
+        presenceRequestPending = false;
+      }
+    }
+
+    setInterval(refreshMemberPresence, 30000);
+    document.addEventListener("visibilitychange", refreshMemberPresence);
+    window.addEventListener("online", refreshMemberPresence);
+    window.addEventListener("offline", refreshMemberPresence);
+
     function renderAdminUsersPanel(usersList) {
       return `
         <div class="panel">
@@ -2811,7 +2845,6 @@
             ${usersList.map(m => {
               const schema = getRoleSchema(m.role);
               const pic = m.avatar || schema.defaultAvatar;
-              const statusBadge = m.status === "Active" ? "badge-completed" : (m.status === "Suspended" ? "badge-inactive" : "badge-pending");
               const memberAttendance = (dashboardCache.attendance || []).filter(a => String(a.memberId || a.MemberID || "").toLowerCase() === String(m.memberId || "").toLowerCase());
               const attCounts = { present: 0, absent: 0, late: 0, onDuty: 0 };
               memberAttendance.forEach(a => { const st=String(a.status||"Present").toLowerCase(); if(st==="present")attCounts.present++; else if(st==="absent")attCounts.absent++; else if(st==="late")attCounts.late++; else if(st==="on duty"||st==="onduty")attCounts.onDuty++; });
@@ -2823,7 +2856,7 @@
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
                       <img class="avatar" src="${pic}" alt="${m.fullName}" />
                       <div style="overflow: hidden;">
-                        <h3 style="font-size: 1rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${m.fullName}</h3>
+                        <h3 style="font-size: 1rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ngxEsc(m.fullName)} <span data-online-member="${ngxEsc(String(m.memberId).trim().toLowerCase())}" role="img" aria-label="Online" title="Online" style="color:var(--emerald-glow)" ${navigator.onLine && m.isOnline ? "" : "hidden"}>✓</span></h3>
                         <div style="font-size: 0.78rem; font-weight: 700; color: #60A5FA;">${m.position}</div>
                         <div style="font-size: 0.72rem; color: var(--text-dim);">ID: ${m.memberId}</div>
                       </div>
@@ -2834,10 +2867,6 @@
                       <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:.72rem;color:var(--text-dim)">
                         <span class="badge badge-progress">Total ${attTotal}</span><span class="badge badge-completed">Present ${attCounts.present}</span><span class="badge badge-pending">Late ${attCounts.late}</span><span class="badge badge-progress">On Duty ${attCounts.onDuty}</span><span class="badge badge-inactive">Absent ${attCounts.absent}</span>
                       </div>
-                    </div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
-                      <span class="badge ${statusBadge}">${m.status}</span>
-                      <span class="badge ${m.isOnline ? "badge-completed" : "badge-progress"}">${m.isOnline ? "Online" : "Offline"}</span>
                     </div>
                     <div style="font-size: 0.74rem; color: var(--text-dim);">
                       Email: ${m.email || "Not set"}<br/>
@@ -3118,7 +3147,7 @@
         const rows = dashboardCache.records[secKey] || [];
         rows.forEach(r => {
           if (String(r.MemberID).toLowerCase() === String(targetMemberId).toLowerCase()) {
-            memberRecords.push({ ...r, _sectionLabel: secDef.label, _fields: secDef.fields });
+            memberRecords.push({ ...r, _sectionKey: secKey, _sectionLabel: secDef.label, _fields: secDef.fields });
           }
         });
       });
@@ -3146,8 +3175,10 @@
               <div class="record-ticket status-done">
                 <div class="ticket-header"><span class="badge badge-progress">${rec._sectionLabel}</span></div>
                 <div class="ticket-body">
-                  ${rec._fields.map(f => rec[f.name] ? `<div><strong>${f.label}:</strong> ${rec[f.name]}</div>` : "").join("")}
+                  ${rec._fields.map(f => rec[f.name] ? `<div><strong>${f.label}:</strong> ${ngxEsc(rec[f.name])}</div>` : "").join("")}
                 </div>
+                <button type="button" class="btn-outline btn-sm" data-admin-record="${ngxEsc(rec.RecordID)}" data-section="${ngxEsc(rec._sectionKey)}">Edit Record</button>
+                <button type="button" class="btn-danger btn-sm" data-review-decision="delete" data-section="${ngxEsc(rec._sectionKey)}" data-record-id="${ngxEsc(rec.RecordID)}">Delete</button>
               </div>
             `).join("")
           }
@@ -3155,6 +3186,19 @@
       `;
       document.getElementById("memberDetailModal").style.display = "flex";
     }
+
+    document.getElementById("memberDetailBody").addEventListener("click", event => {
+      const button = event.target.closest("[data-admin-record]");
+      if (!button || sessionUser?.role !== "ADMIN") return;
+      const record = (dashboardCache.records[button.dataset.section] || [])
+        .find(item => item.RecordID === button.dataset.adminRecord);
+      if (!record) return;
+      const owner = (dashboardCache.members || []).find(member =>
+        String(member.memberId).toLowerCase() === String(record.MemberID).toLowerCase());
+      if (!owner) return;
+      closeModal("memberDetailModal");
+      openRecordModal(record.RecordID, button.dataset.section, owner.role);
+    });
 
     function openPublishNoticeModal() {
       document.getElementById("publishNoticeForm").reset();
@@ -3243,24 +3287,96 @@
       }
     });
 
+    function renderAdminReviewQueue() {
+      const entries = Object.entries(dashboardCache.records || {}).flatMap(([section, rows]) =>
+        rows.filter(row => row.ApprovalStatus === "Pending").map(row => ({
+          section, id: row.RecordID, member: row.MemberName || row.MemberID, memberId: row.MemberID, values: row
+        })));
+      (dashboardCache.attendance || []).filter(row => row.ApprovalStatus === "Pending").forEach(row => {
+        entries.push({section: "Attendance", id: row.attendanceId, member: row.memberName || row.memberId, memberId: row.memberId, values: row});
+      });
+      const omit = new Set(["ApprovalStatus", "RecordID", "attendanceId", "MemberName", "memberName"]);
+      const sections = [...new Set(entries.map(entry => entry.section))].sort();
+      const filters = entries.length ? `<div class="form-grid" data-review-filters>
+        <div class="form-group"><label for="reviewSearch">Find member or record</label>
+          <input type="search" id="reviewSearch" placeholder="Name, member ID, or record ID" /></div>
+        <div class="form-group"><label for="reviewSection">Section</label><select id="reviewSection">
+          <option value="">All sections</option>${sections.map(section => `<option>${ngxEsc(section)}</option>`).join("")}
+        </select></div>
+      </div><p id="reviewFilterCount" role="status">${entries.length} pending</p>` : "";
+      entries.sort((a,b) => new Date(a.values.SyncedAt || a.values.syncedAt) - new Date(b.values.SyncedAt || b.values.syncedAt));
+      return `<div class="panel" data-review-panel><div class="panel-header"><h2>Pending Approvals</h2></div>
+        ${filters}
+        ${entries.map(entry => `<details class="record-ticket" data-review-entry data-member-search="${ngxEsc([entry.member, entry.memberId, entry.id].join(" "))}" data-review-section="${ngxEsc(entry.section)}">
+          <summary>${ngxEsc(entry.member)} · ${ngxEsc(entry.section)}</summary>
+          <dl>${Object.entries(entry.values).filter(([key, value]) => !omit.has(key) && value !== "").map(([key, value]) =>
+            `<dt>${ngxEsc(key)}</dt><dd>${ngxEsc(value)}</dd>`).join("")}</dl>
+          ${["approve", "delete"].map(decision => `<button type="button" class="${decision === "delete" ? "btn-danger" : "btn-primary"} btn-sm" data-review-decision="${decision}" data-section="${ngxEsc(entry.section)}" data-record-id="${ngxEsc(entry.id)}">${decision === "delete" ? "Delete" : "Approve"}</button>`).join("")}
+        </details>`).join("") || "<p>No submissions awaiting approval.</p>"}</div>`;
+    }
+
+    function filterAdminReview(event) {
+      const filters = event.target.closest("[data-review-filters]");
+      if (!filters) return;
+      const panel = filters.closest("[data-review-panel]");
+      const term = filters.querySelector("#reviewSearch").value.trim().toLowerCase();
+      const section = filters.querySelector("#reviewSection").value;
+      let shown = 0;
+      panel.querySelectorAll("[data-review-entry]").forEach(entry => {
+        const match = entry.dataset.memberSearch.toLowerCase().includes(term) &&
+          (!section || entry.dataset.reviewSection === section);
+        entry.hidden = !match;
+        if (match) shown++;
+      });
+      panel.querySelector("#reviewFilterCount").textContent = shown ? `${shown} pending` : "No matching submissions.";
+    }
+
+    document.addEventListener("input", filterAdminReview);
+    document.addEventListener("change", filterAdminReview);
+
+    document.addEventListener("click", async event => {
+      const button = event.target.closest("[data-review-decision], [data-delete-activity], [data-dashboard-nav]");
+      if (!button || sessionUser?.role !== "ADMIN") return;
+      if (button.dataset.dashboardNav) {
+        activeNav = button.dataset.dashboardNav;
+        ngxNavPush(activeNav);
+        return renderAdminDashboard();
+      }
+      const decision = button.dataset.reviewDecision;
+      if ((!decision || decision === "delete") && !confirm("Permanently delete this server record?")) return;
+      button.disabled = true;
+      const payload = decision
+        ? {action: "adminReviewEntry", decision, section: button.dataset.section, recordId: button.dataset.recordId}
+        : {action: "adminDeleteActivity", activityKey: button.dataset.deleteActivity};
+      const result = await callApi(payload, decision === "approve" ? "Approving..." : "Deleting...");
+      if (result.success) {
+        if (button.closest("#memberDetailModal")) closeModal("memberDetailModal");
+        await loadAndRender();
+      } else {
+        button.disabled = false;
+        alert(result.message || "The update could not be saved.");
+      }
+    });
+
     function renderActivityFeedHtml(feed) {
       if (!feed || feed.length === 0) return `<p style="color: var(--text-dim);">No activity logs recorded yet.</p>`;
       return `<ul class="feed-list">
         ${feed.map(item => `
           <li class="feed-item">
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-              <strong style="color: var(--text-main); font-size: 0.9rem;">${item.memberName} (${item.position})</strong>
+              <strong style="color: var(--text-main); font-size: 0.9rem;">${ngxEsc(item.memberName)} (${ngxEsc(item.position)})</strong>
               <span class="badge badge-progress">${item.section}</span>
             </div>
-            <div style="font-size: 0.84rem; color: var(--text-dim); margin-top: 4px;">${item.action}: <strong style="color: #93C5FD;">${item.summary}</strong></div>
+            <div style="font-size: 0.84rem; color: var(--text-dim); margin-top: 4px;">${ngxEsc(item.action)}: <strong style="color: #93C5FD;">${ngxEsc(item.summary)}</strong></div>
             <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px;">${ngxFmt(item.timestamp)}</div>
+            ${sessionUser?.role === "ADMIN" && item.activityKey ? `<button type="button" class="btn-danger btn-sm" data-delete-activity="${ngxEsc(item.activityKey)}">Delete</button>` : ""}
           </li>
         `).join("")}
       </ul>`;
     }
 
     function renderAdminAttendancePanel() {
-      const rows = dashboardCache.attendance || [];
+      const rows = (dashboardCache.attendance || []).filter(item => item.ApprovalStatus !== "Pending");
       const members = (dashboardCache.members || []).filter(m => m.role !== "ADMIN");
       const summaries = members.map(m => {
         const mine = rows.filter(a => String(a.memberId || a.MemberID || "").toLowerCase() === String(m.memberId || "").toLowerCase());
@@ -3276,12 +3392,43 @@
         </div>
         <div class="panel">
           <div class="panel-header"><h2>All Attendance Entries</h2><button class="btn-outline btn-sm" type="button" onclick="exportAttendanceCsv()">Export Attendance CSV</button></div>
-          ${rows.length ? `<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Member</th><th>Position</th><th>Date</th><th>Time</th><th>Status</th><th>Location</th><th>Notes</th></tr></thead><tbody>${rows.map(a => `<tr><td>${a.memberName || a.memberId || "—"}<br><small>${a.memberId || ""}</small></td><td>${a.position || "—"}</td><td>${a.date || "—"}</td><td>${a.time || "—"}</td><td>${a.status || "Present"}</td><td>${a.location || "—"}</td><td>${a.notes || "—"}</td></tr>`).join("")}</tbody></table></div>` : `<p style="color:var(--text-dim)">No attendance entries yet.</p>`}
+          ${rows.length ? `<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Member</th><th>Position</th><th>Date</th><th>Time</th><th>Status</th><th>Location</th><th>Notes</th><th>Actions</th></tr></thead><tbody>${rows.map(a => `<tr><td>${ngxEsc(a.memberName || a.memberId || "—")}<br><small>${ngxEsc(a.memberId || "")}</small></td><td>${ngxEsc(a.position || "—")}</td><td>${ngxEsc(a.date || "—")}</td><td>${ngxEsc(a.time || "—")}</td><td>${ngxEsc(a.status || "Present")}</td><td>${ngxEsc(a.location || "—")}</td><td>${ngxEsc(a.notes || "—")}</td><td>${a.attendanceId ? `<button type="button" class="btn-outline btn-sm" data-edit-attendance="${ngxEsc(a.attendanceId)}">Edit</button> <button type="button" class="btn-danger btn-sm" data-review-decision="delete" data-section="Attendance" data-record-id="${ngxEsc(a.attendanceId)}">Delete</button>` : ""}</td></tr>`).join("")}</tbody></table></div>` : `<p style="color:var(--text-dim)">No attendance entries yet.</p>`}
         </div>`;
     }
 
+    document.addEventListener("click", event => {
+      const button = event.target.closest("[data-edit-attendance]");
+      if (!button || sessionUser?.role !== "ADMIN") return;
+      const entry = (dashboardCache.attendance || []).find(row => row.attendanceId === button.dataset.editAttendance);
+      if (!entry) return;
+      const form = document.createElement("form");
+      const statuses = ["Present", "Absent", "Absence", "Late", "Leave", "On Duty"];
+      form.innerHTML = `<label>Date <input name="date" value="${ngxEsc(entry.date || "")}"></label>
+        <label>Time <input name="time" value="${ngxEsc(entry.time || "")}"></label>
+        <label>Status <select name="status">${statuses.map(status =>
+          `<option ${status === (entry.status || "Present") ? "selected" : ""}>${status}</option>`).join("")}</select></label>
+        <label>Location <input name="location" value="${ngxEsc(entry.location || "")}"></label>
+        <label>Notes <textarea name="notes">${ngxEsc(entry.notes || "")}</textarea></label>
+        <button class="btn-primary btn-sm" type="submit">Save</button>
+        <button class="btn-outline btn-sm" type="button">Cancel</button>`;
+      button.replaceWith(form);
+      form.querySelector('[type="button"]').addEventListener("click", () => form.replaceWith(button));
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const save = form.querySelector('[type="submit"]');
+        save.disabled = true;
+        const fields = Object.fromEntries(new FormData(form));
+        const result = await callApi({action: "adminUpdateAttendance", attendanceId: entry.attendanceId, ...fields}, "Updating attendance...");
+        if (result.success) await loadAndRender();
+        else {
+          save.disabled = false;
+          alert(result.message || "Attendance could not be updated.");
+        }
+      });
+    });
+
     function exportAttendanceCsv() {
-      const rows = dashboardCache.attendance || [];
+      const rows = (dashboardCache.attendance || []).filter(item => item.ApprovalStatus !== "Pending");
       const headers = ["Member ID","Member Name","Position","Date","Time","Status","Location","Notes"];
       const esc = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
       const lines = [headers, ...rows.map(a => [a.memberId,a.memberName,a.position,a.date,a.time,a.status,a.location,a.notes])].map(r => r.map(esc).join(","));
@@ -3318,16 +3465,24 @@
         </div>`;
     }
 
+    function editableMemberAttendance() {
+      const remote = (dashboardCache.attendance || []).filter(item => memberCanEdit(item.submittedAt));
+      const queued = pendingQueueCache.filter(item => item.kind === "attendance" && memberCanEdit(item.createdAt));
+      return remote.filter(item => !queued.some(local => local.recordId === item.attendanceId)).concat(
+        queued.map(item => ({...item.fields, attendanceId: item.recordId, submittedAt: item.createdAt}))
+      );
+    }
+
     function renderMemberAttendanceHtml() {
-      const rows = dashboardCache.attendance || [];
+      const rows = editableMemberAttendance();
       const today = new Date();
       const dateValue = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
       return `
         <div class="panel">
           <div class="panel-header"><h2>Mark Attendance</h2></div>
-          <form id="memberAttendanceForm" class="form-grid">
+          <form id="memberAttendanceForm" class="form-grid"><input type="hidden" id="editAttendanceId">
             
-            <div class="form-group"><label for="attStatus">Status</label><select id="attStatus"><option>Present</option><option>Late</option><option>Leave</option><option>Absence</option></select></div>
+            <div class="form-group"><label for="attStatus">Status</label><select id="attStatus"><option>Present</option><option>Late</option><option>Leave</option><option>Absence</option><option>Absent</option><option>On Duty</option></select></div>
             <div class="form-group"><label for="attLocation">Location</label><input id="attLocation" type="text" placeholder="Office / Field / Event"></div>
             <div class="form-group" style="grid-column:1/-1"><label for="attNotes">Notes (required for Late and Leave)</label><textarea id="attNotes" placeholder="Reason for late arrival, leave application or explanation"></textarea></div>
             <div class="form-group" style="grid-column:1/-1"><button class="btn-primary" type="submit">Submit Attendance</button></div>
@@ -3336,9 +3491,10 @@
         <div class="panel">
           <div class="panel-header"><h2>My Attendance History</h2><span class="badge badge-progress">${rows.length} Entries</span></div>
           ${rows.length ? `<div class="record-stream">${rows.map(a => `
-            <div class="record-ticket ${String(a.status).toLowerCase()==="present" ? "status-done" : "status-wait"}">
-              <div class="ticket-header"><strong>${a.date || "—"} · ${a.time || ""}</strong><span class="badge ${String(a.status).toLowerCase()==="present" ? "badge-completed" : "badge-pending"}">${a.status || "Recorded"}</span></div>
-              <div class="ticket-body"><div><strong>Location:</strong> ${a.location || "—"}</div>${a.notes ? `<div><strong>Notes:</strong> ${a.notes}</div>` : ""}</div>
+            <div data-member-edit-until="${ngxEsc(a.submittedAt)}" class="record-ticket ${String(a.status).toLowerCase()==="present" ? "status-done" : "status-wait"}">
+              <div class="ticket-header"><strong>${ngxEsc(a.date || "—")} · ${ngxEsc(a.time || "")}</strong><span class="badge ${String(a.status).toLowerCase()==="present" ? "badge-completed" : "badge-pending"}">${ngxEsc(a.status || "Recorded")}</span></div>
+              <div class="ticket-body"><div><strong>Location:</strong> ${ngxEsc(a.location || "—")}</div>${a.notes ? `<div><strong>Notes:</strong> ${ngxEsc(a.notes)}</div>` : ""}</div>
+              <button type="button" class="btn-outline btn-sm" data-member-attendance-edit="${ngxEsc(a.attendanceId)}">Edit</button>
             </div>`).join("")}</div>` : `<p style="color:var(--text-dim)">Abhi attendance record mojood nahi. Upar form se attendance submit karein.</p>`}
         </div>`;
     }
@@ -3346,25 +3502,44 @@
     function bindMemberAttendanceForm() {
       const form = document.getElementById("memberAttendanceForm");
       if (!form) return;
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const res = await callApi({
-          action: "markAttendance",
-          memberId: sessionUser.memberId,
-          memberName: sessionUser.fullName,
-          position: sessionUser.position,
-          date: "",
-          time: "",
-          status: document.getElementById("attStatus").value,
-          location: document.getElementById("attLocation").value,
-          notes: document.getElementById("attNotes").value
-        }, "Submitting Attendance...");
-        if (res.success) {
-          await loadAndRender();
-          activeNav = "attendance";
-          renderMemberDashboard();
-          alert("Attendance submitted successfully.");
-        } else alert(res.message || "Attendance could not be submitted.");
+      const id = document.getElementById("editAttendanceId");
+      const status = document.getElementById("attStatus");
+      const location = document.getElementById("attLocation");
+      const notes = document.getElementById("attNotes");
+      document.querySelectorAll("[data-member-attendance-edit]").forEach(button => button.addEventListener("click", () => {
+        const entry = editableMemberAttendance().find(item => item.attendanceId === button.dataset.memberAttendanceEdit);
+        if (!entry) return;
+        id.value = entry.attendanceId;
+        status.value = entry.status;
+        location.value = entry.location || "";
+        notes.value = entry.notes || "";
+        status.focus();
+      }));
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const user = sessionUser;
+        if (!user) return;
+        const entry = id.value && editableMemberAttendance().find(item => item.attendanceId === id.value);
+        if (id.value && !entry) return alert("The 10-minute edit window has ended.");
+        const now = new Date();
+        const createdAt = entry?.submittedAt || now.toISOString();
+        const recordId = id.value || `OFFLINE-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const isOfflineNew = recordId.startsWith("OFFLINE-");
+        const fields = {date: entry?.date || now.toLocaleDateString("en-CA"), time: entry?.time || now.toLocaleTimeString(),
+          status: status.value, location: location.value, notes: notes.value};
+        if (["Late", "Leave"].includes(fields.status) && !fields.notes.trim()) return alert("Add a note for Late or Leave.");
+        const queued = pendingQueueCache.some(item => item.recordId === recordId);
+        if (navigator.onLine && !queued) {
+          const result = await callApi({action: isOfflineNew ? "markAttendance" : "updateOwnAttendance",
+            recordId, attendanceId: recordId, createdAt, ...fields}, "Submitting Attendance...", true);
+          if (result.success) {
+            await loadAndRender();
+            return;
+          }
+          if (!result.offline) return alert(result.message || "Attendance could not be submitted.");
+        }
+        await idbPutOfflineRecord({kind: "attendance", recordId, memberId: user.memberId, fields, createdAt, isOfflineNew});
+        await loadAndRender();
       });
     }
 
@@ -3374,7 +3549,7 @@
         const firstField = schema.sections[rec._sectionKey]?.fields?.[0]?.name;
         const createdMs = new Date(rec.CreatedAt || 0).getTime();
         const canEdit = rec._isOfflinePending || (createdMs > 0 && Date.now() >= createdMs && Date.now() - createdMs <= 10 * 60 * 1000);
-        return `<div class="record-ticket"><div class="ticket-header"><strong>${rec[firstField] || rec.RecordID}</strong><span class="badge badge-progress">${rec._sectionLabel}</span></div><div class="ticket-footer"><span style="font-size:.74rem;color:var(--text-dim)">Submitted: ${createdMs ? ngxFmt(createdMs) : "Date unavailable"}</span>${canEdit ? `<button type="button" class="btn-outline btn-sm" onclick="openRecordModal('${rec.RecordID}', '${rec._sectionKey}')">Edit (10 min)</button>` : `<span class="badge badge-inactive">Edit closed</span>`}</div></div>`;
+        return `<div class="record-ticket" data-member-edit-until="${ngxEsc(rec.CreatedAt)}"><div class="ticket-header"><strong>${rec[firstField] || rec.RecordID}</strong><span class="badge badge-progress">${rec._sectionLabel}</span></div><div class="ticket-footer"><span style="font-size:.74rem;color:var(--text-dim)">Submitted: ${createdMs ? ngxFmt(createdMs) : "Date unavailable"}</span>${canEdit ? `<button type="button" class="btn-outline btn-sm" onclick="openRecordModal('${rec.RecordID}', '${rec._sectionKey}')">Edit (10 min)</button>` : `<span class="badge badge-inactive">Edit closed</span>`}</div></div>`;
       }).join("")}</div>`;
     }
 
@@ -3385,8 +3560,9 @@
     document.getElementById("closeRecordModal").addEventListener("click", () => closeModal("recordModal"));
     document.getElementById("cancelRecordModal").addEventListener("click", () => closeModal("recordModal"));
 
-    function openRecordModal(recordId = null, sectionKey = "") {
-      const schema = getRoleSchema(sessionUser.role);
+    function openRecordModal(recordId = null, sectionKey = "", recordRole = sessionUser.role) {
+      const schema = getRoleSchema(recordRole);
+      document.getElementById("recordForm").dataset.recordRole = recordRole;
       const secSelect = document.getElementById("recSectionSelect");
       secSelect.innerHTML = Object.entries(schema.sections)
         .map(([k, s]) => `<option value="${k}">${s.label}</option>`)
@@ -3416,7 +3592,7 @@
       const sec = schema.sections[sectionKey];
       const container = document.getElementById("sectionFieldsContainer");
       container.innerHTML = sec.fields.map((f) => {
-        let val = recordObj[f.name] || "";
+        let val = String(recordObj[f.name] ?? "");
         if (f.type === "date" && val && val.includes("T")) val = val.split("T")[0];
         const req = f.required ? "required" : "";
 
@@ -3433,7 +3609,7 @@
           return `
             <div class="form-group" style="grid-column: 1 / -1;">
               <label for="f_${f.name}">${f.label}</label>
-              <textarea id="f_${f.name}" ${req}>${val}</textarea>
+              <textarea id="f_${f.name}" ${req}>${ngxEsc(val)}</textarea>
             </div>`;
         }
         if (f.type === "file") {
@@ -3448,14 +3624,14 @@
         return `
           <div class="form-group">
             <label for="f_${f.name}">${f.label}</label>
-            <input id="f_${f.name}" type="${f.type}" value="${val}" placeholder="${f.type === "url" ? "https://youtube.com/..." : ""}" ${req} />
+            <input id="f_${f.name}" type="${f.type}" value="${ngxEsc(val)}" placeholder="${f.type === "url" ? "https://youtube.com/..." : ""}" ${req} />
           </div>`;
       }).join("");
     }
 
     document.getElementById("recordForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const schema = getRoleSchema(sessionUser.role);
+      const schema = getRoleSchema(e.currentTarget.dataset.recordRole || sessionUser.role);
       const section = document.getElementById("recSectionSelect").value;
       const incomingEditId = document.getElementById("editRecordId").value;
 
@@ -3487,14 +3663,26 @@
       const nowIso = new Date().toISOString();
       const isExistingOfflineItem = incomingEditId && incomingEditId.startsWith("OFFLINE-");
       const isOnlineServerEdit = incomingEditId && !isExistingOfflineItem;
+      const offlineRecordId = incomingEditId || `OFFLINE-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      if (sessionUser.role !== "ADMIN" && incomingEditId) {
+        const createdAt = isExistingOfflineItem
+          ? pendingQueueCache.find(item => item.recordId === incomingEditId)?.createdAt
+          : (dashboardCache.records[section] || []).find(row => row.RecordID === incomingEditId)?.CreatedAt;
+        if (!memberCanEdit(createdAt)) return alert("The 10-minute edit window has ended.");
+      }
+      const adminEdit = sessionUser.role === "ADMIN" && isOnlineServerEdit;
+      if (adminEdit && !navigator.onLine) {
+        alert("Go online to edit a member's submitted record.");
+        return;
+      }
 
       if (navigator.onLine && !isExistingOfflineItem) {
         const res = await callApi({
-          action: incomingEditId ? "updateOwnRecord" : "saveRecord",
+          action: adminEdit ? "adminUpdateRecord" : incomingEditId ? "updateOwnRecord" : "saveRecord",
           memberId: sessionUser.memberId,
           role: sessionUser.role,
           section,
-          recordId: incomingEditId || null,
+          recordId: offlineRecordId,
           fields
         }, "Saving Record...", true);
 
@@ -3502,13 +3690,12 @@
           closeModal("recordModal");
           await loadAndRender();
           return;
-        } else if (!res.offline) {
+        } else if (adminEdit || !res.offline) {
           alert("Failed to save record: " + res.message);
           return;
         }
       }
 
-      const offlineRecordId = incomingEditId || `OFFLINE-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const existingQueueEntry = pendingQueueCache.find(p => p.recordId === offlineRecordId);
 
       await idbPutOfflineRecord({
@@ -3641,15 +3828,25 @@
     })();
     ngxInitAdminIcon();
 
-    /* ---- Push registration (Median OneSignal bridge, guarded) ---- */
+    /* ---- Push registration for the installed Median app ---- */
+    let medianPushRegistrationRequested = false;
     function ngxRegisterPush() {
+      const user = getValidTabSession();
+      const bridge = window.median?.onesignal;
+      if (!user || medianPushRegistrationRequested || typeof bridge?.register !== "function") return;
+      medianPushRegistrationRequested = true;
       try {
-        const u = getValidTabSession(); if (!u || u.role === "ADMIN" || !window.median) return;
-        const o = window.median.onesignal;
-        if (o) { if (typeof o.register === "function") o.register(); if (o.externalUserId && o.externalUserId.set) o.externalUserId.set({ externalId: u.memberId }); }
-        ngxApi({ action: "registerPush", token: u.token, memberId: u.memberId, platform: "median" });
-      } catch (e) {}
+        Promise.resolve(bridge.register()).catch(() => { medianPushRegistrationRequested = false; });
+      } catch (error) {
+        medianPushRegistrationRequested = false;
+      }
     }
+
+    window.addEventListener("pageshow", ngxRegisterPush);
+    window.addEventListener("online", ngxRegisterPush);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) ngxRegisterPush();
+    });
 
     /* ---- Applications: admin panel (view / approve / reject / edit / export / delete) ---- */
     function ngxDownload(name, text, mime) { const b = new Blob(["\ufeff" + text], { type: mime }); const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href = u; a.download = name; a.click(); URL.revokeObjectURL(u); }
@@ -3771,28 +3968,76 @@
           <div class="form-group"><label for="ngxAnnSubject">Announcement Subject</label><input id="ngxAnnSubject" type="text" maxlength="160" required></div>
           <div class="form-group"><label for="ngxAnnBody">Announcement Content</label><textarea id="ngxAnnBody" rows="6" maxlength="10000" required></textarea></div>
           <div class="form-group" style="display:flex;align-items:center;gap:10px"><input id="ngxAnnEmail" type="checkbox" style="width:auto"><label for="ngxAnnEmail" style="margin:0">Also email all active members with an email address</label></div>
-          <p style="font-size:.82rem;color:var(--text-dim)">Publishing adds this announcement to the existing Notices area. Push delivery is not enabled until Firebase Cloud Messaging is configured.</p>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px"><input id="ngxAnnPush" type="checkbox" style="width:auto" checked><label for="ngxAnnPush" style="margin:0">Send push notification to subscribed devices</label></div>
+          <p id="ngxAnnResult" role="status" style="font-size:.82rem;color:var(--text-dim)"></p>
+          <button class="btn-outline btn-sm" id="ngxRetryPush" type="button" hidden>Retry push</button>
           <button class="btn-primary" type="submit">Publish Announcement</button>
         </form></div>`;
     }
     function ngxBindAnnouncement() {
-      const form = ngxById("ngxAnnouncementForm"); if (!form) return;
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+      const form = ngxById("ngxAnnouncementForm");
+      if (!form) return;
+      const status = ngxById("ngxAnnResult");
+      const retry = ngxById("ngxRetryPush");
+      const submit = form.querySelector('[type="submit"]');
+      let pendingPush;
+
+      async function deliver(payload, emailUsers) {
+        const sent = await callApi({
+          action: "sendAnnouncement", subject: payload.subject, body: payload.body, emailUsers,
+          pushUsers: Boolean(payload.pushRequestId), pushRequestId: payload.pushRequestId
+        }, "Sending announcement...");
+        const delivery = [];
+        if (emailUsers) delivery.push(sent.success
+          ? `Email sent to ${Number(sent.emailCount || 0)} active member(s); ${Number(sent.failedCount || 0)} failed.`
+          : `Email issue: ${sent.message || "Unknown error."}`);
+        if (payload.pushRequestId) {
+          pendingPush = sent.push?.success ? undefined : payload;
+          retry.hidden = !pendingPush;
+          delivery.push(sent.push?.message || sent.message || "Push could not be sent.");
+        }
+        status.textContent = ["Announcement published in Notices.", ...delivery].join(" ");
+      }
+
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
         const subject = ngxById("ngxAnnSubject").value.trim();
         const body = ngxById("ngxAnnBody").value.trim();
         if (!subject || !body) return alert("Enter both a subject and announcement content.");
-        const save = await callApi({ action: "saveNotice", title: subject, content: body, priority: "Normal" }, "Publishing announcement...");
-        if (!save.success) return alert(save.message || "Announcement could not be saved.");
-        let delivery = "Announcement published in the Notices area.";
-        if (ngxById("ngxAnnEmail").checked) {
-          const sent = await callApi({ action: "sendAnnouncement", subject, body, emailUsers: true }, "Sending announcement emails...");
-          delivery += sent.success ? ` Email sent to ${Number(sent.emailCount || 0)} active member(s); ${Number(sent.failedCount || 0)} failed.` : ` Email delivery issue: ${sent.message || "unknown error"}`;
+        if (submit.disabled) return;
+        submit.disabled = true;
+        retry.disabled = true;
+        try {
+          const save = await callApi({action: "saveNotice", title: subject, content: body, priority: "Normal"}, "Publishing announcement...");
+          if (!save.success) {
+            status.textContent = save.message || "Announcement could not be saved.";
+            return;
+          }
+          pendingPush = undefined;
+          retry.hidden = true;
+          const pushUsers = ngxById("ngxAnnPush").checked;
+          const emailUsers = ngxById("ngxAnnEmail").checked;
+          status.textContent = "Announcement published in Notices.";
+          form.reset();
+          if (pushUsers || emailUsers) {
+            await deliver({subject, body, pushRequestId: pushUsers ? crypto.randomUUID() : undefined}, emailUsers);
+          }
+        } finally {
+          submit.disabled = false;
+          retry.disabled = false;
         }
-        alert(delivery + " Push notifications remain unavailable until Firebase Cloud Messaging is configured.");
-        await loadAndRender();
-        activeNav = "admin_announcements";
-        renderAdminDashboard();
+      });
+
+      retry.addEventListener("click", async () => {
+        if (!pendingPush || retry.disabled) return;
+        retry.disabled = true;
+        submit.disabled = true;
+        try {
+          await deliver(pendingPush, false);
+        } finally {
+          retry.disabled = false;
+          submit.disabled = false;
+        }
       });
     }
     function ngxDevicesPanel() {
