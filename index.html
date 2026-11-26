@@ -1368,6 +1368,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycby5LnAXTM3zjVtaON1vBeTI4Qm9-ZvmQ3wlSNPyF3SkGMmoahT2UJzp04i4II2Xxmp6/exec";
     const NGI_LOGO_URL = "https://drive.google.com/thumbnail?id=1Mj8oSLt9hYZS3qJgSXMsxz1IWlkZumQ6&sz=w1000";
 
+    const MEMBER_BACKGROUND_LIMIT_MS = 15 * 60 * 1000;
     const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000;
     const SESSION_KEY = "ngi_tab_session_v3";
 
@@ -1487,11 +1488,6 @@
         const existingAuths = (await idbGetMeta("offline_auth_profiles")) || {};
         const entry = existingAuths[String(memberId).trim().toLowerCase()];
         if (!entry) return null;
-        const age = Date.now() - entry.updatedAt;
-        if (!Number.isFinite(age) || age < 0 || age >= SESSION_MAX_AGE_MS) {
-          await forgetOfflineLogin(memberId);
-          return null;
-        }
         const inputHash = await computeCredentialHash(memberId, plainPassword);
         return inputHash === entry.credHash ? entry : null;
       } catch (e) {
@@ -1798,7 +1794,11 @@
           localStorage.removeItem(SESSION_KEY);
           return null;
         }
-        if (Date.now() - parsed.loginAt > SESSION_MAX_AGE_MS) {
+        const expired = parsed.user.role === "ADMIN"
+          ? Date.now() - parsed.loginAt > SESSION_MAX_AGE_MS
+          : navigator.onLine && parsed.backgroundSince &&
+            Date.now() - parsed.backgroundSince >= MEMBER_BACKGROUND_LIMIT_MS;
+        if (expired) {
           localStorage.removeItem(SESSION_KEY);
           return null;
         }
@@ -1809,18 +1809,20 @@
       }
     }
 
-    function saveTabSession(userObj, loginAt = Date.now()) {
+    function saveTabSession(userObj) {
       sessionUser = userObj;
       localStorage.setItem(SESSION_KEY, JSON.stringify({
         user: userObj,
-        loginAt
+        loginAt: Date.now()
       }));
+      updateMemberBackgroundSession();
       setTimeout(() => { try { ngxRegisterPush(); } catch (e) {} }, 800);
     }
 
     function clearTabSession(noticeMsg = "") {
       closeSidebar();
       document.getElementById("lockdownScreen").style.display = "none";
+      clearTimeout(memberBackgroundTimer);
       sessionUser = null;
       dashboardCache = {
         records: {}, activityFeed: [], members: [], notices: [],
@@ -1848,6 +1850,39 @@
     };
     let pendingQueueCache = [];
     let activeNav = sessionUser?.role === "ADMIN" ? "admin_overview" : "overview";
+
+    let memberBackgroundTimer;
+
+    function updateMemberBackgroundSession(leaving = false) {
+      clearTimeout(memberBackgroundTimer);
+      if (!sessionUser || sessionUser.role === "ADMIN") return;
+      if (!getValidTabSession()) {
+        clearTabSession("Session expired. Please sign in again.");
+        return;
+      }
+
+      const stored = JSON.parse(localStorage.getItem(SESSION_KEY));
+      if (!navigator.onLine || (!document.hidden && !leaving)) {
+        if (stored.backgroundSince) {
+          delete stored.backgroundSince;
+          localStorage.setItem(SESSION_KEY, JSON.stringify(stored));
+        }
+        return;
+      }
+
+      if (!stored.backgroundSince) {
+        stored.backgroundSince = Date.now();
+        localStorage.setItem(SESSION_KEY, JSON.stringify(stored));
+      }
+      memberBackgroundTimer = setTimeout(updateMemberBackgroundSession,
+        MEMBER_BACKGROUND_LIMIT_MS - (Date.now() - stored.backgroundSince));
+    }
+
+    document.addEventListener("visibilitychange", () => updateMemberBackgroundSession());
+    window.addEventListener("pagehide", () => updateMemberBackgroundSession(true));
+    window.addEventListener("pageshow", () => updateMemberBackgroundSession());
+    window.addEventListener("offline", () => updateMemberBackgroundSession());
+    window.addEventListener("online", () => updateMemberBackgroundSession());
 
     function closeModal(id) {
       document.getElementById(id).style.display = "none";
@@ -2020,7 +2055,7 @@
 
       const offlineProfile = await verifyOfflineLogin(memberId, password);
       if (offlineProfile && offlineProfile.user.role !== "ADMIN") {
-        saveTabSession(offlineProfile.user, offlineProfile.updatedAt);
+        saveTabSession(offlineProfile.user);
         activeNav = "overview";
         await loadAndRender();
       } else {
@@ -2123,6 +2158,7 @@
           role: sessionUser.role
         }, "Loading Live Portal...", true);
 
+        if (!sessionUser) return;
         if (res.locked) {
           document.getElementById("lockdownMessageText").textContent = res.message;
           document.getElementById("lockdownScreen").style.display = "flex";
@@ -2139,7 +2175,11 @@
             sessionUser.role = freshProfile.role;
             sessionUser.avatar = freshProfile.avatar || sessionUser.avatar;
             sessionUser.email = freshProfile.email || sessionUser.email;
-            saveTabSession(sessionUser);
+            const stored = JSON.parse(localStorage.getItem(SESSION_KEY));
+            if (stored) {
+              stored.user = sessionUser;
+              localStorage.setItem(SESSION_KEY, JSON.stringify(stored));
+            }
           }
           await idbSaveMeta(`cached_dashboard_${sessionUser.memberId}`, res.data);
         } else {
